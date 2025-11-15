@@ -1,0 +1,41 @@
+AGENT TODO — Morning Issue Radar
+================================
+
+1. SPA Skeleton & Routing (Spec Step 1)
+   - Scaffold index.html, app.js, styles.css with root containers for Bubble View & Topic View.
+   - Implement lightweight hash router + central app state store; ensure back navigation restores previous view.
+   - Render placeholder bubble map with clickable sample bubble that routes to Topic View without console errors.
+
+2. Headline Fetch Module (Spec Step 2)
+   - Select 3+ browser-friendly news sources (e.g., Guardian API, NYT Top Stories, NPR/Reuters RSS) and document required keys.
+   - Build fetchHeadlines() service with parallel requests, per-source normalization, duplication guard, and session cache (localStorage or in-memory).
+   - Add graceful degradation: log failures per source, surface partial data, and provide mock data fallback for local dev.
+
+3. Keyword Extraction Module (Spec Step 3)
+   - Integrate compromise.js or wink-nlp (or custom noun-phrase rules) inside a keywordExtractor service.
+   - Score phrases by cross-source frequency, filter junk terms, and output deterministic top 10–50 phrases with weights.
+   - Expose memoized results tied to the cached headline batch.
+
+4. Bubble Map Renderer (Spec Step 4)
+   - Choose visualization approach (e.g., D3 force layout or custom packing) to size bubbles by weight and color by category/palette.
+   - Implement interactive states (hover tooltip, focus ring) and ensure >50 bubbles render smoothly on desktop & mobile.
+   - Wire bubble clicks to router, passing selected phrase + preloaded metadata.
+
+5. Multi-Source Article Search Module (Spec Step 5)
+   - Implement phraseSearchService that fires parallel queries to at least 3 APIs (NewsAPI, Guardian Search, NYT Article Search, Bing News, etc.) with timeout & retry strategy.
+   - Normalize responses into unified objects, dedupe by canonical URL/title similarity, and enforce <3s aggregate target via Promise.allSettled + early returns.
+   - Add per-session caching keyed by phrase and record non-fatal errors for observability.
+
+6. Topic View Renderer (Spec Step 6)
+   - Build Topic View layout with heading, sort controls (recency/source), optional source filters, and scroll-friendly article list/cards.
+   - Ensure deterministic sorting, duplicate-free rendering, and smooth handling of 100+ results with lazy rendering or virtualization if needed.
+   - Preserve Bubble View state so back navigation restores prior layout and selection.
+
+7. Summary Module (Optional, Spec Step 7)
+   - Evaluate summarization API/LLM endpoint, define prompt & safety constraints, and integrate with debounced trigger after articles load.
+   - Render 3–5 bullet summary + fallback message on timeout; cache summaries per phrase and handle empty result sets gracefully.
+
+8. Final Polish & Deployment (Spec Step 8)
+   - Optimize performance (code splitting, asset compression, request batching) to hit <1s initial load on GitHub Pages.
+   - Audit responsive design, accessibility (focus order, ARIA), and console cleanliness; add lightweight telemetry/logging if feasible.
+   - Configure GitHub Pages deployment pipeline, document API key handling/proxy strategy, and write release checklist/user guide.
