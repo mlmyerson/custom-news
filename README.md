@@ -49,13 +49,27 @@ request so regressions are caught before deployment.
 
 ## GitHub Pages deployment
 
-This repo ships with a workflow (`.github/workflows/deploy.yml`) that builds the site with Node 20 and publishes the
-`dist/` folder to GitHub Pages. Once the workflow is enabled in the repository settings (`Settings → Pages → Build and
-deployment → GitHub Actions`), every push to `main` will:
+This repo ships with two deployment workflows:
+
+### Production deployment (`main` branch)
+
+The workflow `.github/workflows/deploy.yml` builds the site with Node 20 and publishes the `dist/` folder to GitHub Pages. 
+Once the workflow is enabled in the repository settings (`Settings → Pages → Build and deployment → GitHub Actions`), 
+every push to `main` will:
 
 1. Install dependencies with `npm ci`.
 2. Run `npm run build`.
 3. Upload the `dist/` artifact and deploy it via `actions/deploy-pages`.
+
+### Development deployment (`development` branch)
+
+The workflow `.github/workflows/deploy-dev.yml` provides automated deployment for the `development` branch. Every push to 
+`development` will trigger a deployment to the `development` environment, which can be tracked separately in the 
+repository's environments page.
+
+**Note:** Both workflows deploy to the same GitHub Pages URL (`https://<username>.github.io/custom-news/`). The most 
+recent deployment (from either `main` or `development`) will be visible at that URL. Use GitHub Environments to track 
+which branch is currently deployed and manage deployment history.
 
 Because the project lives at `https://<username>.github.io/custom-news/`, the Vite config sets `base: '/custom-news/'`
 so the generated asset paths resolve correctly in production. Update that base path if you fork the repo under a
