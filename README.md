@@ -32,6 +32,28 @@ npm run preview
 
 Deploy the contents of `dist/` to your preferred static hosting platform.
 
+## News API configuration
+
+The headline service (`src/services/fetchHeadlines.ts`) aggregates four public sources. Two of them require API keys that
+must be provided through Vite environment variables:
+
+| Source | Endpoint | Environment variable |
+| --- | --- | --- |
+| The Guardian Open Platform | `https://content.guardianapis.com/search` | `VITE_GUARDIAN_API_KEY` |
+| The New York Times Top Stories API | `https://api.nytimes.com/svc/topstories/v2/home.json` | `VITE_NYT_API_KEY` |
+| NPR World News RSS | `https://feeds.npr.org/1001/rss.xml` | _none_ |
+| Reuters business desk RSS | `https://www.reutersagency.com/feed/?best-topics=business-and-finance` | _none_ |
+
+Create a `.env.local` file in the project root and populate the required keys before running `npm run dev`:
+
+```
+VITE_GUARDIAN_API_KEY=<your key>
+VITE_NYT_API_KEY=<your key>
+```
+
+When one or more keys are missing, the app logs a warning per source, gracefully falls back to mock headlines for the
+current session, and caches the result in `localStorage` by date so the UI can continue to function offline.
+
 ## Testing
 
 This project uses [Vitest](https://vitest.dev/) and React Testing Library for unit and UI coverage.
