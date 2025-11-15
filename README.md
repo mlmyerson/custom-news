@@ -32,6 +32,21 @@ npm run preview
 
 Deploy the contents of `dist/` to your preferred static hosting platform.
 
+## Testing
+
+This project uses [Vitest](https://vitest.dev/) and React Testing Library for unit and UI coverage.
+
+| Command | Purpose |
+| --- | --- |
+| `npm run test` | Run the full Vitest suite once (unit + UI). |
+| `npm run test:unit` | Execute only the logic-focused `*.unit.test.ts(x)` files. |
+| `npm run test:ui` | Execute the UI-focused `*.ui.test.tsx` files. |
+| `npm run test:watch` | Start Vitest in watch mode for local development. |
+| `npm run typecheck` | Run TypeScript in `--noEmit` mode to catch type regressions. |
+
+The CI workflow (`.github/workflows/ci.yml`) runs `test:unit`, `test:ui`, `typecheck`, and `build` in parallel on every push/pull
+request so regressions are caught before deployment.
+
 ## GitHub Pages deployment
 
 This repo ships with a workflow (`.github/workflows/deploy.yml`) that builds the site with Node 20 and publishes the
