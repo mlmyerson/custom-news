@@ -40,13 +40,10 @@ jobs:
       - name: Build site
         run: npm run build
 
-      # Deploy or remove PR preview using rossjrw/deploy-pr-preview
+      # Deploy or remove PR preview using rossjrw/pr-preview-action
       # When PR is open/updated: deploys preview to pr-preview/pr-<number>/
       # When PR is closed: removes the preview deployment
       - name: Deploy PR preview
-        uses: rossjrw/deploy-pr-preview@v1.6.2
+        uses: rossjrw/pr-preview-action@v1.6.2
         with:
           source-dir: ./dist
-          deploy-dir: pr-preview
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
