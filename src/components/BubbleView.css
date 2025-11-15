@@ -2,20 +2,32 @@
   gap: 1.5rem;
 }
 
-.bubble-view__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 1rem;
+.bubble-view__cloud {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  min-height: clamp(320px, 65vh, 520px);
+  padding: clamp(1rem, 4vw, 2rem);
 }
 
 .bubble {
-  background: radial-gradient(circle at 30% 20%, #fef3c7, #fcd34d);
+  --bubble-size: 160px;
+  --bubble-hue: 45;
+  width: var(--bubble-size);
+  height: var(--bubble-size);
   border: none;
   border-radius: 50%;
-  aspect-ratio: 1;
-  padding: 1.25rem;
-  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.15);
-  color: #1f2937;
+  padding: 1.4rem;
+  background: radial-gradient(
+    circle at 30% 20%,
+    hsl(var(--bubble-hue) 80% 90%),
+    hsl(var(--bubble-hue) 70% 55%)
+  );
+  box-shadow: 0 25px 50px rgba(15, 23, 42, 0.2);
+  color: #0f172a;
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -23,29 +35,43 @@
   justify-content: center;
   text-align: center;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  animation: bubbleFloat 14s ease-in-out infinite;
+  animation-delay: var(--bubble-delay, 0s);
 }
 
 .bubble:focus-visible,
 .bubble:hover {
-  transform: translateY(-6px) scale(1.03);
-  box-shadow: 0 24px 55px rgba(15, 23, 42, 0.25);
-  outline: 2px solid #f59e0b;
-  outline-offset: 3px;
+  transform: translateY(-10px) scale(1.05);
+  box-shadow: 0 35px 65px rgba(15, 23, 42, 0.3);
+  outline: 2px solid hsla(var(--bubble-hue), 75%, 45%, 0.7);
+  outline-offset: 4px;
 }
 
 .bubble__label {
   font-weight: 600;
-  font-size: 1rem;
+  font-size: clamp(1rem, 1vw + 0.9rem, 1.15rem);
 }
 
 .bubble__summary {
   font-size: 0.85rem;
-  margin-top: 0.5rem;
-  color: #4c1d95;
+  margin-top: 0.4rem;
+  color: rgba(15, 23, 42, 0.75);
 }
 
-@media (min-width: 768px) {
-  .bubble__label {
-    font-size: 1.1rem;
+@media (max-width: 640px) {
+  .bubble-view__cloud {
+    min-height: auto;
+  }
+}
+
+@keyframes bubbleFloat {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+  100% {
+    transform: translateY(0px);
   }
 }
