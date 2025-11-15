@@ -1,0 +1,50 @@
+name: Deploy PR previews
+
+# This workflow creates and manages preview deployments for pull requests.
+# Preview URLs follow the pattern: https://mlmyerson.github.io/custom-news/pr-preview/pr-<number>/
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
+
+# Permissions required for PR preview deployments
+permissions:
+  contents: write  # Required to push preview builds to gh-pages branch
+  pull-requests: write  # Required to comment on PRs with preview URLs
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Set up Node.js environment
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # Install dependencies using npm ci (for package-lock.json)
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      # Build the site using the build script from package.json
+      - name: Build site
+        run: npm run build
+
+      # Deploy or remove PR preview using rossjrw/deploy-pr-preview
+      # When PR is open/updated: deploys preview to pr-preview/pr-<number>/
+      # When PR is closed: removes the preview deployment
+      - name: Deploy PR preview
+        uses: rossjrw/deploy-pr-preview@v1.6.2
+        with:
+          source-dir: ./dist
+          deploy-dir: pr-preview
