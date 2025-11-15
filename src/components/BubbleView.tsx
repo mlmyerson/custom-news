@@ -37,20 +37,16 @@ const BubbleView = ({ onSelectTopic }: BubbleViewProps) => {
         </p>
       </header>
 
-      <div className="bubble-view__grid" role="list">
+      <ul className="bubble-view__grid">
         {SAMPLE_TOPICS.map((topic) => (
-          <button
-            key={topic.label}
-            type="button"
-            className="bubble"
-            role="listitem"
-            onClick={() => onSelectTopic(topic.label)}
-          >
-            <span className="bubble__label">{topic.label}</span>
-            <span className="bubble__summary">{topic.summary}</span>
-          </button>
+          <li key={topic.label} className="bubble-view__item">
+            <button type="button" className="bubble" onClick={() => onSelectTopic(topic.label)}>
+              <span className="bubble__label">{topic.label}</span>
+              <span className="bubble__summary">{topic.summary}</span>
+            </button>
+          </li>
         ))}
-      </div>
+      </ul>
     </section>
   );
 };
