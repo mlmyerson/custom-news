@@ -1,0 +1,51 @@
+.bubble-view {
+  gap: 1.5rem;
+}
+
+.bubble-view__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.bubble {
+  background: radial-gradient(circle at 30% 20%, #fef3c7, #fcd34d);
+  border: none;
+  border-radius: 50%;
+  aspect-ratio: 1;
+  padding: 1.25rem;
+  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.15);
+  color: #1f2937;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.bubble:focus-visible,
+.bubble:hover {
+  transform: translateY(-6px) scale(1.03);
+  box-shadow: 0 24px 55px rgba(15, 23, 42, 0.25);
+  outline: 2px solid #f59e0b;
+  outline-offset: 3px;
+}
+
+.bubble__label {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.bubble__summary {
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  color: #4c1d95;
+}
+
+@media (min-width: 768px) {
+  .bubble__label {
+    font-size: 1.1rem;
+  }
+}

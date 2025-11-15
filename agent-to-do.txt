@@ -1,10 +1,10 @@
 AGENT TODO — Morning Issue Radar
 ================================
 
-1. SPA Skeleton & Routing (Spec Step 1)
-   - Scaffold index.html, app.js, styles.css with root containers for Bubble View & Topic View.
-   - Implement lightweight hash router + central app state store; ensure back navigation restores previous view.
-   - Render placeholder bubble map with clickable sample bubble that routes to Topic View without console errors.
+1. SPA Skeleton & Routing (Spec Step 1) ✅ Complete
+   - Hash router, shared app state provider, and placeholder Bubble/Topic views are live.
+   - Back/forward navigation restores state via hash-based routing.
+   - Sample bubbles allow navigation preview with clear scaffolding for future data wiring.
 
 2. Headline Fetch Module (Spec Step 2)
    - Select 3+ browser-friendly news sources (e.g., Guardian API, NYT Top Stories, NPR/Reuters RSS) and document required keys.
