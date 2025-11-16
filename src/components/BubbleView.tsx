@@ -1,45 +1,12 @@
 import './BubbleView.css';
+import { useMemo, type CSSProperties } from 'react';
 import { useHeadlines } from '../hooks/useHeadlines';
-import type { Headline } from '../services/fetchHeadlines';
+import { extractKeywordBubbles, SAMPLE_KEYWORD_BUBBLES } from '../services/extractKeywords';
+import type { KeywordBubble } from '../services/extractKeywords';
 
-const SAMPLE_TOPICS: Headline[] = [
-  {
-    title: 'Global Supply Chains',
-    summary: 'How factories are adapting to persistent shipping delays.',
-    source: 'Sample dataset',
-    url: '#',
-    publishedAt: new Date().toISOString(),
-  },
-  {
-    title: 'AI Regulation',
-    summary: 'Governments debate safeguards for rapidly evolving models.',
-    source: 'Sample dataset',
-    url: '#',
-    publishedAt: new Date().toISOString(),
-  },
-  {
-    title: 'Climate Resilience',
-    summary: 'Cities invest in infrastructure upgrades ahead of storm season.',
-    source: 'Sample dataset',
-    url: '#',
-    publishedAt: new Date().toISOString(),
-  },
-  {
-    title: 'Elections & Policy',
-    summary: 'Campaigns sharpen economic messaging heading into the fall.',
-    source: 'Sample dataset',
-    url: '#',
-    publishedAt: new Date().toISOString(),
-  },
-];
+const BASE_BUBBLE_SIZE = 180;
 
-const formatPublishedAt = (isoDate: string) => {
-  try {
-    return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(isoDate));
-  } catch {
-    return '';
-  }
-};
+const formatMentions = (count: number) => `${count} ${count === 1 ? 'mention' : 'mentions'}`;
 
 export type BubbleViewProps = {
   onSelectTopic: (topic: string) => void;
@@ -47,7 +14,16 @@ export type BubbleViewProps = {
 
 const BubbleView = ({ onSelectTopic }: BubbleViewProps) => {
   const { headlines, loading, error, refresh } = useHeadlines();
-  const bubbleItems = (headlines.length ? headlines : SAMPLE_TOPICS).slice(0, 8);
+  const keywordBubbles = useMemo<KeywordBubble[]>(() => {
+    if (!headlines.length) {
+      return SAMPLE_KEYWORD_BUBBLES;
+    }
+
+    const extracted = extractKeywordBubbles(headlines);
+    return extracted.length ? extracted : SAMPLE_KEYWORD_BUBBLES;
+  }, [headlines]);
+
+  const bubbleItems = keywordBubbles.slice(0, 24);
 
   return (
     <section className="view bubble-view" aria-labelledby="bubble-view-heading">
@@ -58,8 +34,8 @@ const BubbleView = ({ onSelectTopic }: BubbleViewProps) => {
         </div>
         <div className="bubble-view__status">
           <p className="view__description">
-            Headlines aggregate The Guardian, NYT Top Stories, NPR, and Reuters feeds. Keyword extraction will replace these
-            direct articles in Step 3.
+            Fetched headlines from The Guardian, NYT Top Stories, NPR, and Reuters are converted into weighted keyword
+            phrases. Larger, warmer bubbles indicate phrases that appear across multiple outlets.
           </p>
           <div className="bubble-view__actions">
             <button type="button" className="ghost" onClick={refresh} disabled={loading}>
@@ -76,24 +52,40 @@ const BubbleView = ({ onSelectTopic }: BubbleViewProps) => {
       </header>
 
       <div className="bubble-view__grid" role="list">
-        {bubbleItems.map((topic) => (
-          <button
-            key={topic.url ?? topic.title}
-            type="button"
-            className="bubble"
-            role="listitem"
-            onClick={() => onSelectTopic(topic.title)}
-          >
-            <span className="bubble__label">{topic.title}</span>
-            <span className="bubble__summary">{topic.summary}</span>
-            {topic.source && (
-              <span className="bubble__source">
-                {topic.source}
-                {topic.publishedAt && ` · ${formatPublishedAt(topic.publishedAt)}`}
-              </span>
-            )}
-          </button>
-        ))}
+        {bubbleItems.map((bubble) => {
+          const size = Math.round(BASE_BUBBLE_SIZE * bubble.scale);
+          return (
+            <button
+              key={bubble.phrase}
+              type="button"
+              className="bubble"
+              role="listitem"
+              style={{
+                '--bubble-size': `${size}px`,
+                '--bubble-color-start': bubble.colors.start,
+                '--bubble-color-end': bubble.colors.end,
+              } as CSSProperties}
+              onClick={() => onSelectTopic(bubble.label)}
+            >
+              <span className="bubble__label">{bubble.label}</span>
+              <span className="bubble__metric">{formatMentions(bubble.mentions)}</span>
+              {bubble.sampleHeadline && (
+                <span className="bubble__source">
+                  {bubble.sampleHeadline.source}
+                  {bubble.sampleHeadline.publishedAt &&
+                    ` · ${new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(
+                      new Date(bubble.sampleHeadline.publishedAt),
+                    )}`}
+                </span>
+              )}
+              {bubble.sampleHeadline?.title && (
+                <span className="bubble__context" aria-hidden="true">
+                  “{bubble.sampleHeadline.title}”
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
     </section>
   );
