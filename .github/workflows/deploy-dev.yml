@@ -1,9 +1,9 @@
-name: Deploy site to GitHub Pages
+name: Deploy development branch
 
 on:
   push:
     branches:
-      - main
+      - development
   workflow_dispatch:
 
 permissions:
@@ -12,12 +12,15 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
-  cancel-in-progress: true
+  group: "pages-dev"
+  cancel-in-progress: false
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: development
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -37,20 +40,13 @@ jobs:
       - name: Build site
         run: npm run build
         env:
-          VITE_DEPLOY_BRANCH: main
+          VITE_DEPLOY_BRANCH: development
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
