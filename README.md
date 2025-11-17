@@ -32,6 +32,82 @@ npm run preview
 
 Deploy the contents of `dist/` to your preferred static hosting platform.
 
+## News source configuration
+
+To keep the signal high, `src/services/fetchHeadlines.ts` aggregates eight reputable, fact-forward organizations via
+their public RSS feeds. No API keys or mock payloads are required:
+
+| Source | Feed |
+| --- | --- |
+| Associated Press | `https://apnews.com/apf-topnews?format=xml` |
+| BBC News | `https://feeds.bbci.co.uk/news/world/rss.xml` |
+| NPR | `https://feeds.npr.org/1001/rss.xml` |
+| PBS NewsHour | `https://www.pbs.org/newshour/feeds/rss/headlines` |
+| ProPublica | `https://www.propublica.org/feeds/featured-stories` |
+| Reuters | `https://www.reuters.com/world/rss` |
+| The Guardian | `https://www.theguardian.com/world/rss` |
+| The New York Times | `https://rss.nytimes.com/services/xml/rss/nyt/World.xml` |
+
+Because many RSS endpoints block direct browser access, the app fetches them through
+[`https://api.allorigins.win/raw?url={url}`](https://allorigins.win/) by default. Override or disable that helper via `.env.local`:
+
+```
+# Optional: customize or disable the RSS proxy.
+# Supports either a template containing `{url}` or a base URL that will have the feed URL appended.
+VITE_HEADLINES_PROXY_ORIGIN=https://api.allorigins.win/raw?url={url}
+```
+
+- Set a custom template (e.g., `https://my-news-proxy.example.com/fetch?target={url}`) to route through your own relay.
+- Provide a base URL (e.g., `https://r.jina.ai/`) to prepend the feed URL directly if your proxy expects that format.
+- Set it to an empty string to fetch feeds directly when serving from a permissive origin.
+
+Successful fetches are normalized, deduplicated (URL + title), sorted by recency, and cached per day in `localStorage`
+so reloads remain fast. If every source fails, the UI now simply displays an empty state—no mock data ever leaks into
+production.
+
+### Optional APIs and aggregators
+
+If you need deeper archives or richer metadata, consider layering in one of these non-commercial friendly providers:
+
+- [NewsAPI.org](https://newsapi.org/) — free tier for personal use with thousands of outlets.
+- [NewsData.io](https://newsdata.io/) — JSON or CSV exports with daily request allotments.
+- [The New York Times Developer Network](https://developer.nytimes.com/apis) — archive, article search, and more.
+- [The Guardian Open Platform](https://open-platform.theguardian.com/) — comprehensive content + metadata API.
+
+Be sure to observe each provider’s usage limits and terms of service, especially if you expand beyond personal or
+development usage.
+
+## News source integration layer
+
+The reusable search helpers that power future Topic View work live in `modules/newsSources.js`. They expose individual
+functions (e.g., `searchGuardian`, `searchNYT`, `searchNewsAPI`, etc.) plus a `searchAllSources(keyword)` convenience
+that fan-outs to ten trusted providers and deduplicates the merged feed. All calls run in the browser via `fetch()` and
+gracefully degrade (returning `[]`) on any per-source failure.
+
+### API keys & proxy configuration
+
+Set the following environment variables (or populate `window.__NEWS_SOURCE_CONFIG__` at runtime) before importing the
+module:
+
+```
+VITE_GUARDIAN_API_KEY=...
+VITE_NYT_API_KEY=...
+VITE_NEWSAPI_KEY=...
+VITE_BING_API_KEY=...
+VITE_NEWS_PROXY_ORIGIN=https://r.jina.ai/   # optional CORS helper
+```
+
+### Example usage
+
+```ts
+import { searchAllSources } from '../modules/newsSources';
+
+const articles = await searchAllSources('climate resilience');
+```
+
+The helper normalizes each article to `{ title, url, source, snippet, published_at }` so the calling component can focus
+on presentation logic.
+
 ## Testing
 
 This project uses [Vitest](https://vitest.dev/) and React Testing Library for unit and UI coverage.
