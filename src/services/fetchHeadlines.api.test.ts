@@ -39,7 +39,10 @@ const fetchWithTimeout = async (url: string) => {
 };
 
 describe('headline API connectivity', () => {
-  it(
+  const shouldRunApiTests = process.env.RUN_API_TESTS === 'true';
+  const testMethod = shouldRunApiTests ? it : it.skip;
+  
+  testMethod(
     'can reach at least one upstream endpoint',
     async () => {
       const results = await Promise.all(
