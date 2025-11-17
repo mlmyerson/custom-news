@@ -1,4 +1,5 @@
 import './App.css';
+import { useEffect } from 'react';
 import BubbleView from './components/BubbleView';
 import TopicView from './components/TopicView';
 import BranchIndicator from './components/BranchIndicator';
@@ -6,6 +7,7 @@ import { useHashRoute } from './hooks/useHashRoute';
 import { useHeadlines } from './hooks/useHeadlines';
 import { AppStateProvider, useAppState } from './state/AppStateContext';
 import { useArticleSearch } from './hooks/useArticleSearch';
+import type { Headline } from './services/fetchHeadlines';
 
 const formatUpdatedAt = (iso?: string) => {
   if (!iso) {
@@ -25,16 +27,29 @@ const formatUpdatedAt = (iso?: string) => {
 
 const AppShell = () => {
   const { route, navigate } = useHashRoute();
-  const { selectedTopic, setSelectedTopic } = useAppState();
+  const { selectedTopic, setSelectedTopic, selectedHeadline, setSelectedHeadline } = useAppState();
   const headlinesState = useHeadlines();
   const { headlines, lastUpdated, loading } = headlinesState;
   const articleSearchState = useArticleSearch(selectedTopic);
   const headlineCount = headlines.length;
   const sourceCount = new Set(headlines.map((headline) => headline.source)).size || 4;
 
-  const handleSelectTopic = (topic: string) => {
-    setSelectedTopic(topic);
-    navigate('topic');
+  useEffect(() => {
+    if (selectedHeadline && !headlines.some((headline) => headline.url === selectedHeadline.url)) {
+      setSelectedHeadline(null);
+    }
+  }, [headlines, selectedHeadline, setSelectedHeadline]);
+
+  const handleSelectHeadline = (headline: Headline) => {
+    setSelectedHeadline(headline);
+    setSelectedTopic(headline.title);
+    navigate('bubble');
+  };
+
+  const handleShowTopic = () => {
+    if (selectedTopic) {
+      navigate('topic');
+    }
   };
 
   const handleBack = () => {
@@ -62,7 +77,12 @@ const AppShell = () => {
         </header>
 
         {route === 'bubble' ? (
-          <BubbleView onSelectTopic={handleSelectTopic} {...headlinesState} />
+          <BubbleView
+            {...headlinesState}
+            selectedHeadline={selectedHeadline}
+            onSelectHeadline={handleSelectHeadline}
+            onExploreTopic={handleShowTopic}
+          />
         ) : (
           <TopicView topic={selectedTopic} onBack={handleBack} {...articleSearchState} />
         )}

@@ -58,15 +58,17 @@ const formatRelativeTime = (iso?: string) => {
 const toneClassForIndex = (index: number) => BUBBLE_TONES[index % BUBBLE_TONES.length];
 
 const buildSourceDescription = () =>
-  `Headlines from ${formatSourceList(HEADLINE_SOURCE_NAMES)} now surface 1:1 — each bubble is one live story. Click to pivot into the topic view.`;
+  `Headlines from ${formatSourceList(HEADLINE_SOURCE_NAMES)} now surface 1:1 — each bubble is one live story. Tap a bubble to preview the original article or dive into the topic view.`;
 
 const SOURCES_COPY = buildSourceDescription();
 
 export type BubbleViewProps = {
-  onSelectTopic: (topic: string) => void;
+  onSelectHeadline: (headline: Headline) => void;
+  onExploreTopic: () => void;
+  selectedHeadline: Headline | null;
 } & UseHeadlinesResult;
 
-const BubbleView = ({ onSelectTopic, headlines, loading, error, refresh }: BubbleViewProps) => {
+const BubbleView = ({ onSelectHeadline, onExploreTopic, selectedHeadline, headlines, loading, error, refresh }: BubbleViewProps) => {
   const visibleHeadlines = useMemo<Headline[]>(() => headlines.slice(0, BUBBLE_LIMIT), [headlines]);
   const panelItems = visibleHeadlines.slice(0, PANEL_COUNT);
 
@@ -107,12 +109,12 @@ const BubbleView = ({ onSelectTopic, headlines, loading, error, refresh }: Bubbl
               <button
                 key={headline.url}
                 type="button"
-                className={`bubble ${toneClassForIndex(index)}`}
+                className={`bubble ${toneClassForIndex(index)} ${selectedHeadline?.url === headline.url ? 'bubble--active' : ''}`}
                 role="listitem"
                 style={{
                   '--bubble-size': `${BASE_BUBBLE_SIZE}px`,
                 } as CSSProperties}
-                onClick={() => onSelectTopic(headline.title)}
+                onClick={() => onSelectHeadline(headline)}
               >
                 <span className="bubble__label">{clip(headline.title)}</span>
                 <span className="bubble__badge">{headline.source}</span>
@@ -127,33 +129,56 @@ const BubbleView = ({ onSelectTopic, headlines, loading, error, refresh }: Bubbl
 
         <aside className="pulse-panel" aria-labelledby="pulse-panel-heading">
           <div className="pulse-panel__header">
-            <p className="eyebrow">Pulse details</p>
-            <h3 id="pulse-panel-heading">Top phrases by overlap</h3>
+            <p className="eyebrow">Article preview</p>
+            <h3 id="pulse-panel-heading">{selectedHeadline ? 'You tapped a live headline' : 'Select a bubble to preview'}</h3>
             <p className="pulse-panel__description">
-              {panelItems.length ? 'Click any headline to preview it inside the Topic view.' : 'Waiting for live headlines to populate this panel.'}
+              {selectedHeadline
+                ? 'Read the original reporting or jump into the aggregated topic view for deeper coverage.'
+                : panelItems.length
+                  ? 'Pick any bubble to see full article details without leaving the map.'
+                  : 'Waiting for live headlines to populate this panel.'}
             </p>
           </div>
-          <ol className="pulse-panel__list">
-            {panelItems.length ? (
-              panelItems.map((headline, index) => (
-                <li key={headline.url} className="pulse-panel__item">
-                  <button type="button" onClick={() => onSelectTopic(headline.title)}>
-                    <span className="pulse-panel__rank">{index + 1}</span>
-                    <div className="pulse-panel__content">
-                      <span className="pulse-panel__label">{clip(headline.title)}</span>
-                      <span className="pulse-panel__meta">
-                        {headline.source}
-                        {headline.publishedAt && ` · ${formatRelativeTime(headline.publishedAt)}`}
-                      </span>
-                      {headline.summary && <span className="pulse-panel__quote">“{clip(headline.summary, 120)}”</span>}
-                    </div>
-                  </button>
-                </li>
-              ))
-            ) : (
-              <li className="pulse-panel__empty">No headlines ready yet. Refresh the sources to populate this panel.</li>
-            )}
-          </ol>
+          {selectedHeadline ? (
+            <article className="article-preview" aria-live="polite">
+              <p className="article-preview__meta">
+                <span>{selectedHeadline.source}</span>
+                {selectedHeadline.publishedAt && <span>· {formatRelativeTime(selectedHeadline.publishedAt)}</span>}
+              </p>
+              <h4 className="article-preview__title">{selectedHeadline.title}</h4>
+              {selectedHeadline.summary && <p className="article-preview__summary">{selectedHeadline.summary}</p>}
+              <div className="article-preview__actions">
+                <a href={selectedHeadline.url} target="_blank" rel="noreferrer" className="button button--light">
+                  Read full article
+                </a>
+                <button type="button" className="ghost ghost--inverse" onClick={onExploreTopic}>
+                  Explore related coverage
+                </button>
+              </div>
+            </article>
+          ) : (
+            <ol className="pulse-panel__list">
+              {panelItems.length ? (
+                panelItems.map((headline, index) => (
+                  <li key={headline.url} className="pulse-panel__item">
+                    <button type="button" onClick={() => onSelectHeadline(headline)}>
+                      <span className="pulse-panel__rank">{index + 1}</span>
+                      <div className="pulse-panel__content">
+                        <span className="pulse-panel__label">{clip(headline.title)}</span>
+                        <span className="pulse-panel__meta">
+                          {headline.source}
+                          {headline.publishedAt && ` · ${formatRelativeTime(headline.publishedAt)}`}
+                        </span>
+                        {headline.summary && <span className="pulse-panel__quote">“{clip(headline.summary, 120)}”</span>}
+                      </div>
+                    </button>
+                  </li>
+                ))
+              ) : (
+                <li className="pulse-panel__empty">No headlines ready yet. Refresh the sources to populate this panel.</li>
+              )}
+            </ol>
+          )}
         </aside>
       </div>
     </section>

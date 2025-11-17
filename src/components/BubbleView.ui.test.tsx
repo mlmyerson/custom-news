@@ -28,9 +28,16 @@ const baseHeadlinesState = {
   refresh: vi.fn(),
 };
 
+const defaultProps = {
+  ...baseHeadlinesState,
+  onSelectHeadline: vi.fn(),
+  onExploreTopic: vi.fn(),
+  selectedHeadline: null,
+};
+
 describe('BubbleView', () => {
   it('renders a bubble for every available headline', () => {
-    render(<BubbleView onSelectTopic={() => undefined} {...baseHeadlinesState} />);
+  render(<BubbleView {...defaultProps} />);
 
     expect(screen.getByRole('heading', { name: /morning issue radar/i })).toBeInTheDocument();
     const bubbleGrid = screen.getByTestId('headline-bubbles');
@@ -38,18 +45,32 @@ describe('BubbleView', () => {
   });
 
   it('shows an empty state when no headlines are available', () => {
-    render(<BubbleView onSelectTopic={() => undefined} {...baseHeadlinesState} headlines={[]} />);
+  render(<BubbleView {...defaultProps} headlines={[]} />);
 
     expect(screen.getByText(/no live headlines/i)).toBeInTheDocument();
   });
 
-  it('notifies when a bubble is clicked', async () => {
-    const onSelectTopic = vi.fn();
+  it('notifies when a bubble is clicked and surfaces preview actions', async () => {
+    const onSelectHeadline = vi.fn();
+    const onExploreTopic = vi.fn();
     const user = userEvent.setup();
 
-    render(<BubbleView onSelectTopic={onSelectTopic} {...baseHeadlinesState} />);
+    const { rerender } = render(
+      <BubbleView {...defaultProps} onSelectHeadline={onSelectHeadline} onExploreTopic={onExploreTopic} />,
+    );
 
     await user.click(screen.getByRole('button', { name: /coastal cities race/i }));
-    expect(onSelectTopic).toHaveBeenCalledWith(sampleHeadlines[0].title);
+    expect(onSelectHeadline).toHaveBeenCalledWith(sampleHeadlines[0]);
+
+    rerender(
+      <BubbleView
+        {...defaultProps}
+        selectedHeadline={sampleHeadlines[0]}
+        onSelectHeadline={onSelectHeadline}
+        onExploreTopic={onExploreTopic}
+      />,
+    );
+
+    expect(screen.getByText(/read full article/i)).toBeInTheDocument();
   });
 });
