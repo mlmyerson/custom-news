@@ -2,6 +2,7 @@ import './App.css';
 import { useEffect } from 'react';
 import BubbleView from './components/BubbleView';
 import TopicView from './components/TopicView';
+import ArticleDetailView from './components/ArticleDetailView';
 import { useHashRoute } from './hooks/useHashRoute';
 import { useHeadlines } from './hooks/useHeadlines';
 import { AppStateProvider, useAppState } from './state/AppStateContext';
@@ -42,7 +43,7 @@ const AppShell = () => {
   const handleSelectHeadline = (headline: Headline) => {
     setSelectedHeadline(headline);
     setSelectedTopic(headline.title);
-    navigate('bubble');
+    navigate('article');
   };
 
   const handleShowTopic = () => {
@@ -79,6 +80,12 @@ const AppShell = () => {
             {...headlinesState}
             selectedHeadline={selectedHeadline}
             onSelectHeadline={handleSelectHeadline}
+            onExploreTopic={handleShowTopic}
+          />
+        ) : route === 'article' ? (
+          <ArticleDetailView
+            article={selectedHeadline}
+            onBack={handleBack}
             onExploreTopic={handleShowTopic}
           />
         ) : (
