@@ -1,12 +1,18 @@
 import { useCallback, useEffect, useState } from 'react';
 
-export type RouteName = 'bubble' | 'topic';
+export type RouteName = 'bubble' | 'topic' | 'article';
 
 const DEFAULT_ROUTE: RouteName = 'bubble';
 
 const parseRouteFromHash = (hash: string): RouteName => {
-  if (hash.replace('#', '') === 'topic') {
+  const routeStr = hash.replace('#', '');
+  
+  if (routeStr === 'topic') {
     return 'topic';
+  }
+  
+  if (routeStr === 'article') {
+    return 'article';
   }
 
   return DEFAULT_ROUTE;
