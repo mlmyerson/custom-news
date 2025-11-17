@@ -42,7 +42,7 @@ const AppShell = () => {
   const handleSelectHeadline = (headline: Headline) => {
     setSelectedHeadline(headline);
     setSelectedTopic(headline.title);
-    navigate('bubble');
+    navigate('topic');
   };
 
   const handleShowTopic = () => {

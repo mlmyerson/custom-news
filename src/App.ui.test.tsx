@@ -34,17 +34,12 @@ describe('App integration view', () => {
     window.location.hash = '#bubble';
   });
 
-  it('renders the bubble map by default and navigates to topic view from preview', async () => {
+  it('renders the bubble map by default and navigates to topic view on bubble click', async () => {
     render(<App />);
 
     expect(screen.getByRole('heading', { name: /see the issues every outlet repeats today/i })).toBeInTheDocument();
 
     await user.click(await screen.findByRole('button', { name: /test headline alpha/i }));
-
-    expect(screen.getByText(/read full article/i)).toBeInTheDocument();
-    expect(window.location.hash).toBe('#bubble');
-
-    await user.click(screen.getByRole('button', { name: /explore related coverage/i }));
 
     expect(screen.getByRole('heading', { name: sampleHeadlines[0].title })).toBeInTheDocument();
     expect(window.location.hash).toBe('#topic');
