@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  readonly VITE_DEPLOY_BRANCH?: string;
+  readonly VITE_HEADLINES_PROXY_ORIGIN?: string;
 }
 
 interface ImportMeta {

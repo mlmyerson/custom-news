@@ -36,8 +36,6 @@ jobs:
 
       - name: Build site
         run: npm run build
-        env:
-          VITE_DEPLOY_BRANCH: main
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
