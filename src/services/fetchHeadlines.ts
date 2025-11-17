@@ -1,5 +1,19 @@
-const GUARDIAN_API_KEY = import.meta.env.VITE_GUARDIAN_API_KEY as string | undefined;
-const NYT_API_KEY = import.meta.env.VITE_NYT_API_KEY as string | undefined;
+const DEFAULT_PROXY_TEMPLATE = 'https://api.allorigins.win/raw?url={url}';
+const HEADLINE_PROXY_TEMPLATE = (import.meta.env.VITE_HEADLINES_PROXY_ORIGIN as string | undefined)?.trim();
+
+const withProxy = (url: string) => {
+  const template = HEADLINE_PROXY_TEMPLATE ?? DEFAULT_PROXY_TEMPLATE;
+  if (!template) {
+    return url;
+  }
+
+  if (template.includes('{url}')) {
+    return template.replace('{url}', encodeURIComponent(url));
+  }
+
+  const normalizedProxy = template.endsWith('/') ? template : `${template}/`;
+  return `${normalizedProxy}${url}`;
+};
 
 // don't return any mocking information anymore unless its for a test. No mocks should be shown on the live page
 
@@ -60,61 +74,26 @@ const parseDate = (value?: string | null) => {
   return parsed.toISOString();
 };
 
-const fetchGuardianHeadlines: HeadlineFetcher = async () => {
-  if (!GUARDIAN_API_KEY) {
-    throw new Error('Missing VITE_GUARDIAN_API_KEY');
-  }
+const fetchGuardianHeadlines: HeadlineFetcher = () =>
+  parseRssFeed('https://www.theguardian.com/world/rss', 'The Guardian');
 
-  const params = new URLSearchParams({
-    'api-key': GUARDIAN_API_KEY,
-    'page-size': '12',
-    'order-by': 'newest',
-    'show-fields': 'trailText',
-    section: 'world',
-  });
+const fetchNytHeadlines: HeadlineFetcher = () =>
+  parseRssFeed('https://rss.nytimes.com/services/xml/rss/nyt/World.xml', 'The New York Times');
 
-  const response = await fetch(`https://content.guardianapis.com/search?${params.toString()}`);
-  if (!response.ok) {
-    throw new Error(`Guardian API responded with ${response.status}`);
-  }
+const fetchApHeadlines: HeadlineFetcher = () =>
+  parseRssFeed('https://apnews.com/apf-topnews?format=xml', 'Associated Press');
 
-  const payload = await response.json();
-  const results = payload?.response?.results ?? [];
+const fetchBbcHeadlines: HeadlineFetcher = () =>
+  parseRssFeed('https://feeds.bbci.co.uk/news/world/rss.xml', 'BBC News');
 
-  return results.map((item: any) => ({
-    title: item.webTitle,
-    summary: stripHtml(item.fields?.trailText ?? ''),
-    source: 'The Guardian',
-    url: item.webUrl,
-    publishedAt: parseDate(item.webPublicationDate),
-  }));
-};
+const fetchPbsHeadlines: HeadlineFetcher = () =>
+  parseRssFeed('https://www.pbs.org/newshour/feeds/rss/headlines', 'PBS NewsHour');
 
-const fetchNytHeadlines: HeadlineFetcher = async () => {
-  if (!NYT_API_KEY) {
-    throw new Error('Missing VITE_NYT_API_KEY');
-  }
-
-  const params = new URLSearchParams({ 'api-key': NYT_API_KEY });
-  const response = await fetch(`https://api.nytimes.com/svc/topstories/v2/home.json?${params.toString()}`);
-  if (!response.ok) {
-    throw new Error(`NYT API responded with ${response.status}`);
-  }
-
-  const payload = await response.json();
-  const results = payload?.results ?? [];
-
-  return results.map((item: any) => ({
-    title: item.title,
-    summary: item.abstract,
-    source: 'The New York Times',
-    url: item.url,
-    publishedAt: parseDate(item.published_date),
-  }));
-};
+const fetchProPublicaHeadlines: HeadlineFetcher = () =>
+  parseRssFeed('https://www.propublica.org/feeds/featured-stories', 'ProPublica');
 
 const parseRssFeed = async (url: string, source: string): Promise<Headline[]> => {
-  const response = await fetch(url);
+  const response = await fetch(withProxy(url));
   if (!response.ok) {
     throw new Error(`${source} RSS responded with ${response.status}`);
   }
@@ -134,14 +113,17 @@ const parseRssFeed = async (url: string, source: string): Promise<Headline[]> =>
 };
 
 const fetchNprHeadlines: HeadlineFetcher = () => parseRssFeed('https://feeds.npr.org/1001/rss.xml', 'NPR');
-const fetchReutersHeadlines: HeadlineFetcher = () =>
-  parseRssFeed('https://www.reutersagency.com/feed/?best-topics=business-and-finance', 'Reuters');
+const fetchReutersHeadlines: HeadlineFetcher = () => parseRssFeed('https://www.reuters.com/world/rss', 'Reuters');
 
 const SOURCE_FETCHERS: SourceConfig[] = [
+  { name: 'Associated Press', fetcher: fetchApHeadlines },
+  { name: 'BBC News', fetcher: fetchBbcHeadlines },
+  { name: 'NPR', fetcher: fetchNprHeadlines },
+  { name: 'PBS NewsHour', fetcher: fetchPbsHeadlines },
+  { name: 'ProPublica', fetcher: fetchProPublicaHeadlines },
+  { name: 'Reuters', fetcher: fetchReutersHeadlines },
   { name: 'The Guardian', fetcher: fetchGuardianHeadlines },
   { name: 'The New York Times', fetcher: fetchNytHeadlines },
-  { name: 'NPR', fetcher: fetchNprHeadlines },
-  { name: 'Reuters', fetcher: fetchReutersHeadlines },
 ];
 
 export const HEADLINE_SOURCE_NAMES = SOURCE_FETCHERS.map((source) => source.name);

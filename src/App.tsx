@@ -5,6 +5,7 @@ import BranchIndicator from './components/BranchIndicator';
 import { useHashRoute } from './hooks/useHashRoute';
 import { useHeadlines } from './hooks/useHeadlines';
 import { AppStateProvider, useAppState } from './state/AppStateContext';
+import { useArticleSearch } from './hooks/useArticleSearch';
 
 const formatUpdatedAt = (iso?: string) => {
   if (!iso) {
@@ -27,6 +28,7 @@ const AppShell = () => {
   const { selectedTopic, setSelectedTopic } = useAppState();
   const headlinesState = useHeadlines();
   const { headlines, lastUpdated, loading } = headlinesState;
+  const articleSearchState = useArticleSearch(selectedTopic);
   const headlineCount = headlines.length;
   const sourceCount = new Set(headlines.map((headline) => headline.source)).size || 4;
 
@@ -62,7 +64,7 @@ const AppShell = () => {
         {route === 'bubble' ? (
           <BubbleView onSelectTopic={handleSelectTopic} {...headlinesState} />
         ) : (
-          <TopicView topic={selectedTopic} onBack={handleBack} />
+          <TopicView topic={selectedTopic} onBack={handleBack} {...articleSearchState} />
         )}
       </main>
     </>
