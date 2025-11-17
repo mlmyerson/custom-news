@@ -296,32 +296,3 @@ export const extractKeywordBubbles = (headlines: Headline[]): KeywordBubble[] =>
   const ranked = rankKeywords(map);
   return decorateKeywords(ranked);
 };
-
-const SAMPLE_PHRASES = [
-  { phrase: 'ai regulation', mentions: 8 },
-  { phrase: 'climate resilience', mentions: 7 },
-  { phrase: 'gaza ceasefire talks', mentions: 6 },
-  { phrase: 'electric grid upgrades', mentions: 5 },
-  { phrase: 'european elections', mentions: 4 },
-  { phrase: 'supply chain routes', mentions: 4 },
-  { phrase: 'wildfire preparedness', mentions: 3 },
-  { phrase: 'quantum computing race', mentions: 3 },
-];
-
-const buildSampleBubbles = () => {
-  const max = SAMPLE_PHRASES[0]?.mentions ?? 1;
-  return SAMPLE_PHRASES.map((item) => {
-    const normalized = item.mentions / max;
-    const scale = MIN_SCALE + normalized * (MAX_SCALE - MIN_SCALE);
-    return {
-      phrase: item.phrase,
-      label: toTitleCase(item.phrase),
-      mentions: item.mentions,
-      normalizedWeight: normalized,
-      scale: Number(scale.toFixed(2)),
-      colors: buildPalette(item.phrase),
-    } satisfies KeywordBubble;
-  });
-};
-
-export const SAMPLE_KEYWORD_BUBBLES = buildSampleBubbles();

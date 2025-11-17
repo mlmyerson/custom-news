@@ -1,47 +1,74 @@
 import './BubbleView.css';
 import { useMemo, type CSSProperties } from 'react';
 import type { UseHeadlinesResult } from '../hooks/useHeadlines';
-import { extractKeywordBubbles, SAMPLE_KEYWORD_BUBBLES } from '../services/extractKeywords';
-import type { KeywordBubble } from '../services/extractKeywords';
+import type { Headline } from '../services/fetchHeadlines';
+import { HEADLINE_SOURCE_NAMES } from '../services/fetchHeadlines';
+
+// AGENT TODO let's ditch trying to size and weight the headlines for now. Just simply have a bubble for every headline we pull
 
 const BASE_BUBBLE_SIZE = 210;
 const PANEL_COUNT = 6;
+const BUBBLE_LIMIT = 30;
+const BUBBLE_TONES = ['bubble--tone-amber', 'bubble--tone-violet', 'bubble--tone-blue', 'bubble--tone-teal', 'bubble--tone-rose'];
 
-const formatMentions = (count: number) => `${count} ${count === 1 ? 'mention' : 'mentions'}`;
 const clip = (value: string, length = 90) => (value.length > length ? `${value.slice(0, length).trim()}…` : value);
 
-const toneClassForWeight = (weight: number) => {
-  if (weight >= 0.85) {
-    return 'bubble--tone-amber';
+const formatSourceList = (sources: string[]) => {
+  if (sources.length === 0) {
+    return 'our live sources';
   }
-  if (weight >= 0.65) {
-    return 'bubble--tone-violet';
+  if (sources.length === 1) {
+    return sources[0];
   }
-  if (weight >= 0.45) {
-    return 'bubble--tone-blue';
+  if (sources.length === 2) {
+    return `${sources[0]} and ${sources[1]}`;
   }
-  if (weight >= 0.25) {
-    return 'bubble--tone-teal';
-  }
-  return 'bubble--tone-rose';
+  return `${sources.slice(0, -1).join(', ')}, and ${sources[sources.length - 1]}`;
 };
+
+const formatRelativeTime = (iso?: string) => {
+  if (!iso) {
+    return '';
+  }
+
+  const timestamp = Date.parse(iso);
+  if (Number.isNaN(timestamp)) {
+    return '';
+  }
+
+  const diffMs = Date.now() - timestamp;
+  const diffMinutes = Math.round(diffMs / 60000);
+
+  if (diffMinutes < 1) {
+    return 'Just now';
+  }
+  if (diffMinutes < 60) {
+    return `${diffMinutes}m ago`;
+  }
+
+  const diffHours = Math.round(diffMinutes / 60);
+  if (diffHours < 24) {
+    return `${diffHours}h ago`;
+  }
+
+  const diffDays = Math.round(diffHours / 24);
+  return `${diffDays}d ago`;
+};
+
+const toneClassForIndex = (index: number) => BUBBLE_TONES[index % BUBBLE_TONES.length];
+
+const buildSourceDescription = () =>
+  `Headlines from ${formatSourceList(HEADLINE_SOURCE_NAMES)} now surface 1:1 — each bubble is one live story. Click to pivot into the topic view.`;
+
+const SOURCES_COPY = buildSourceDescription();
 
 export type BubbleViewProps = {
   onSelectTopic: (topic: string) => void;
 } & UseHeadlinesResult;
 
 const BubbleView = ({ onSelectTopic, headlines, loading, error, refresh }: BubbleViewProps) => {
-  const keywordBubbles = useMemo<KeywordBubble[]>(() => {
-    if (!headlines.length) {
-      return SAMPLE_KEYWORD_BUBBLES;
-    }
-
-    const extracted = extractKeywordBubbles(headlines);
-    return extracted.length ? extracted : SAMPLE_KEYWORD_BUBBLES;
-  }, [headlines]);
-
-  const bubbleItems = keywordBubbles.slice(0, 24);
-  const panelItems = keywordBubbles.slice(0, PANEL_COUNT);
+  const visibleHeadlines = useMemo<Headline[]>(() => headlines.slice(0, BUBBLE_LIMIT), [headlines]);
+  const panelItems = visibleHeadlines.slice(0, PANEL_COUNT);
 
   return (
     <section className="view bubble-view" aria-labelledby="bubble-view-heading">
@@ -52,8 +79,8 @@ const BubbleView = ({ onSelectTopic, headlines, loading, error, refresh }: Bubbl
         </div>
         <div className="bubble-view__status">
           <p className="view__description">
-            Fetched headlines from The Guardian, NYT Top Stories, NPR, and Reuters are converted into weighted keyword
-            phrases. Larger, warmer bubbles indicate phrases that appear across multiple outlets.
+            {/* AGENT TODO Make the following fetch statement dynamic based on what we're linking to */}
+            {SOURCES_COPY}
           </p>
           <div className="bubble-view__actions">
             <button type="button" className="ghost" onClick={refresh} disabled={loading}>
@@ -69,50 +96,63 @@ const BubbleView = ({ onSelectTopic, headlines, loading, error, refresh }: Bubbl
         </div>
       </header>
       <div className="bubble-view__body">
-        <div className="bubble-view__grid" role="list">
-          {bubbleItems.map((bubble) => {
-            const size = Math.round(BASE_BUBBLE_SIZE * bubble.scale);
-            return (
+        <div
+          className="bubble-view__grid"
+          role={visibleHeadlines.length ? 'list' : undefined}
+          aria-live="polite"
+          data-testid="headline-bubbles"
+        >
+          {visibleHeadlines.length ? (
+            visibleHeadlines.map((headline, index) => (
               <button
-                key={bubble.phrase}
+                key={headline.url}
                 type="button"
-                className={`bubble ${toneClassForWeight(bubble.normalizedWeight)}`}
+                className={`bubble ${toneClassForIndex(index)}`}
                 role="listitem"
                 style={{
-                  '--bubble-size': `${size}px`,
+                  '--bubble-size': `${BASE_BUBBLE_SIZE}px`,
                 } as CSSProperties}
-                onClick={() => onSelectTopic(bubble.label)}
+                onClick={() => onSelectTopic(headline.title)}
               >
-                <span className="bubble__label">{bubble.label}</span>
-                <span className="bubble__badge">{formatMentions(bubble.mentions)}</span>
+                <span className="bubble__label">{clip(headline.title)}</span>
+                <span className="bubble__badge">{headline.source}</span>
               </button>
-            );
-          })}
+            ))
+          ) : (
+            <p className="bubble-view__empty" role="status">
+              {loading ? 'Crunching live feeds…' : error ? 'Headlines unavailable. Try refreshing sources.' : 'No live headlines yet.'}
+            </p>
+          )}
         </div>
 
         <aside className="pulse-panel" aria-labelledby="pulse-panel-heading">
           <div className="pulse-panel__header">
             <p className="eyebrow">Pulse details</p>
             <h3 id="pulse-panel-heading">Top phrases by overlap</h3>
-            <p className="pulse-panel__description">Hover to preview a representative article, then click to explore.</p>
+            <p className="pulse-panel__description">
+              {panelItems.length ? 'Click any headline to preview it inside the Topic view.' : 'Waiting for live headlines to populate this panel.'}
+            </p>
           </div>
           <ol className="pulse-panel__list">
-            {panelItems.map((bubble, index) => (
-              <li key={bubble.phrase} className="pulse-panel__item">
-                <button type="button" onClick={() => onSelectTopic(bubble.label)}>
-                  <span className="pulse-panel__rank">{index + 1}</span>
-                  <div className="pulse-panel__content">
-                    <span className="pulse-panel__label">{bubble.label}</span>
-                    <span className="pulse-panel__meta">{formatMentions(bubble.mentions)}</span>
-                    {bubble.sampleHeadline?.title && (
-                      <span className="pulse-panel__quote">
-                        “{clip(bubble.sampleHeadline.title)}” · {bubble.sampleHeadline.source}
+            {panelItems.length ? (
+              panelItems.map((headline, index) => (
+                <li key={headline.url} className="pulse-panel__item">
+                  <button type="button" onClick={() => onSelectTopic(headline.title)}>
+                    <span className="pulse-panel__rank">{index + 1}</span>
+                    <div className="pulse-panel__content">
+                      <span className="pulse-panel__label">{clip(headline.title)}</span>
+                      <span className="pulse-panel__meta">
+                        {headline.source}
+                        {headline.publishedAt && ` · ${formatRelativeTime(headline.publishedAt)}`}
                       </span>
-                    )}
-                  </div>
-                </button>
-              </li>
-            ))}
+                      {headline.summary && <span className="pulse-panel__quote">“{clip(headline.summary, 120)}”</span>}
+                    </div>
+                  </button>
+                </li>
+              ))
+            ) : (
+              <li className="pulse-panel__empty">No headlines ready yet. Refresh the sources to populate this panel.</li>
+            )}
           </ol>
         </aside>
       </div>

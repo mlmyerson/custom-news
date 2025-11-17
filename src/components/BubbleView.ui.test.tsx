@@ -1,10 +1,27 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import BubbleView from './BubbleView';
 
+const sampleHeadlines = [
+  {
+    title: 'Coastal cities race to upgrade infrastructure',
+    summary: 'Officials accelerate seawall and grid hardening projects ahead of storm season.',
+    source: 'NPR',
+    url: 'https://example.com/npr-infrastructure',
+    publishedAt: new Date().toISOString(),
+  },
+  {
+    title: 'Regulators outline new AI guardrails for frontier labs',
+    summary: 'Global agencies sketch synchronized safety rules.',
+    source: 'Reuters',
+    url: 'https://example.com/reuters-ai',
+    publishedAt: new Date().toISOString(),
+  },
+];
+
 const baseHeadlinesState = {
-  headlines: [],
+  headlines: sampleHeadlines,
   loading: false,
   error: undefined,
   lastUpdated: undefined,
@@ -12,11 +29,18 @@ const baseHeadlinesState = {
 };
 
 describe('BubbleView', () => {
-  it('renders the list of sample topics', () => {
+  it('renders a bubble for every available headline', () => {
     render(<BubbleView onSelectTopic={() => undefined} {...baseHeadlinesState} />);
 
     expect(screen.getByRole('heading', { name: /morning issue radar/i })).toBeInTheDocument();
-    expect(screen.getAllByRole('button').length).toBeGreaterThanOrEqual(4);
+    const bubbleGrid = screen.getByTestId('headline-bubbles');
+    expect(within(bubbleGrid).getAllByRole('listitem')).toHaveLength(sampleHeadlines.length);
+  });
+
+  it('shows an empty state when no headlines are available', () => {
+    render(<BubbleView onSelectTopic={() => undefined} {...baseHeadlinesState} headlines={[]} />);
+
+    expect(screen.getByText(/no live headlines/i)).toBeInTheDocument();
   });
 
   it('notifies when a bubble is clicked', async () => {
@@ -25,7 +49,7 @@ describe('BubbleView', () => {
 
     render(<BubbleView onSelectTopic={onSelectTopic} {...baseHeadlinesState} />);
 
-    await user.click(screen.getByRole('button', { name: /ai regulation/i }));
-    expect(onSelectTopic).toHaveBeenCalledWith('AI Regulation');
+    await user.click(screen.getByRole('button', { name: /coastal cities race/i }));
+    expect(onSelectTopic).toHaveBeenCalledWith(sampleHeadlines[0].title);
   });
 });

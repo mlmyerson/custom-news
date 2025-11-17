@@ -1,6 +1,8 @@
 const GUARDIAN_API_KEY = import.meta.env.VITE_GUARDIAN_API_KEY as string | undefined;
 const NYT_API_KEY = import.meta.env.VITE_NYT_API_KEY as string | undefined;
 
+// don't return any mocking information anymore unless its for a test. No mocks should be shown on the live page
+
 export type Headline = {
   title: string;
   summary: string;
@@ -142,6 +144,8 @@ const SOURCE_FETCHERS: SourceConfig[] = [
   { name: 'Reuters', fetcher: fetchReutersHeadlines },
 ];
 
+export const HEADLINE_SOURCE_NAMES = SOURCE_FETCHERS.map((source) => source.name);
+
 const CACHE_PREFIX = 'custom-news:headlines:';
 const getCacheKey = () => `${CACHE_PREFIX}${new Date().toISOString().slice(0, 10)}`;
 
@@ -180,23 +184,6 @@ const writeCache = (headlines: Headline[]) => {
   }
 };
 
-const MOCK_HEADLINES: Headline[] = [
-  {
-    title: 'Mockwire: Infrastructure upgrades accelerate across coastal cities',
-    summary: 'Sample offline data used when API keys are missing. Replace once live services are connected.',
-    source: 'Mockwire',
-    url: 'https://example.com/mockwire-infrastructure',
-    publishedAt: new Date().toISOString(),
-  },
-  {
-    title: 'Sample Daily: Regulators weigh AI guardrails',
-    summary: 'Demonstrates the UI while waiting for upstream authentication.',
-    source: 'Sample Daily',
-    url: 'https://example.com/sample-ai',
-    publishedAt: new Date().toISOString(),
-  },
-];
-
 export const fetchHeadlines = async ({ bypassCache = false }: { bypassCache?: boolean } = {}) => {
   if (!bypassCache) {
     const cached = readCache();
@@ -217,11 +204,11 @@ export const fetchHeadlines = async ({ bypassCache = false }: { bypassCache?: bo
     return [];
   });
 
-  let normalized = sortHeadlines(dedupeHeadlines(aggregated));
+  const normalized = sortHeadlines(dedupeHeadlines(aggregated));
 
   if (normalized.length === 0) {
-    console.info('[headlines] Falling back to mock data');
-    normalized = MOCK_HEADLINES;
+    console.warn('[headlines] No live sources returned data. Skipping cache write.');
+    return [];
   }
 
   writeCache(normalized);
