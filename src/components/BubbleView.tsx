@@ -64,7 +64,7 @@ const SOURCES_COPY = buildSourceDescription();
 
 export type BubbleViewProps = {
   onSelectHeadline: (headline: Headline) => void;
-  onExploreTopic: () => void;
+  onExploreTopic: (headline: Headline | null) => void;
   selectedHeadline: Headline | null;
 } & UseHeadlinesResult;
 
@@ -151,7 +151,11 @@ const BubbleView = ({ onSelectHeadline, onExploreTopic, selectedHeadline, headli
                 <a href={selectedHeadline.url} target="_blank" rel="noreferrer" className="button button--light">
                   Read full article
                 </a>
-                <button type="button" className="ghost ghost--inverse" onClick={onExploreTopic}>
+                <button
+                  type="button"
+                  className="ghost ghost--inverse"
+                  onClick={() => onExploreTopic(selectedHeadline)}
+                >
                   Explore related coverage
                 </button>
               </div>

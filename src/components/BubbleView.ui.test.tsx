@@ -37,7 +37,7 @@ const defaultProps = {
 
 describe('BubbleView', () => {
   it('renders a bubble for every available headline', () => {
-  render(<BubbleView {...defaultProps} />);
+    render(<BubbleView {...defaultProps} />);
 
     expect(screen.getByRole('heading', { name: /morning issue radar/i })).toBeInTheDocument();
     const bubbleGrid = screen.getByTestId('headline-bubbles');
@@ -45,7 +45,7 @@ describe('BubbleView', () => {
   });
 
   it('shows an empty state when no headlines are available', () => {
-  render(<BubbleView {...defaultProps} headlines={[]} />);
+    render(<BubbleView {...defaultProps} headlines={[]} />);
 
     expect(screen.getByText(/no live headlines/i)).toBeInTheDocument();
   });
@@ -72,5 +72,8 @@ describe('BubbleView', () => {
     );
 
     expect(screen.getByText(/read full article/i)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /explore related coverage/i }));
+    expect(onExploreTopic).toHaveBeenCalledWith(sampleHeadlines[0]);
   });
 });
