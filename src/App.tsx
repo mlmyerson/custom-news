@@ -2,7 +2,6 @@ import './App.css';
 import { useEffect } from 'react';
 import BubbleView from './components/BubbleView';
 import TopicView from './components/TopicView';
-import BranchIndicator from './components/BranchIndicator';
 import { useHashRoute } from './hooks/useHashRoute';
 import { useHeadlines } from './hooks/useHeadlines';
 import { AppStateProvider, useAppState } from './state/AppStateContext';
@@ -58,7 +57,6 @@ const AppShell = () => {
 
   return (
     <>
-      <BranchIndicator />
       <main className="app">
         <header className="app__header">
           <p className="eyebrow">Morning Issue Radar</p>
