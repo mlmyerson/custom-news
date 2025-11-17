@@ -1,3 +1,5 @@
+import { decodeEntities } from '../utils/decodeEntities';
+
 const DEFAULT_PROXY_TEMPLATE = 'https://api.allorigins.win/raw?url={url}';
 const HEADLINE_PROXY_TEMPLATE = (import.meta.env.VITE_HEADLINES_PROXY_ORIGIN as string | undefined)?.trim();
 
@@ -32,7 +34,18 @@ type SourceConfig = {
   fetcher: HeadlineFetcher;
 };
 
-const stripHtml = (value: string | undefined) => value?.replace(/<[^>]+>/g, '').trim() ?? '';
+const stripHtml = (value: string | undefined) => {
+  const stripped = value?.replace(/<[^>]+>/g, '').trim() ?? '';
+  return stripped ? decodeEntities(stripped) : '';
+};
+const sanitizeText = (value: string | null | undefined, fallback = '') => {
+  const trimmed = value?.trim() ?? '';
+  if (!trimmed) {
+    return fallback;
+  }
+
+  return decodeEntities(trimmed);
+};
 
 const normalizeUrl = (value: string) => {
   try {
@@ -104,7 +117,7 @@ const parseRssFeed = async (url: string, source: string): Promise<Headline[]> =>
   const items = Array.from(doc.querySelectorAll('item')).slice(0, 10);
 
   return items.map((item) => ({
-    title: item.querySelector('title')?.textContent?.trim() ?? 'Untitled story',
+    title: sanitizeText(item.querySelector('title')?.textContent, 'Untitled story'),
     summary: stripHtml(item.querySelector('description')?.textContent ?? ''),
     source,
     url: item.querySelector('link')?.textContent?.trim() ?? '#',

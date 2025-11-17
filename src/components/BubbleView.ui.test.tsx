@@ -5,14 +5,14 @@ import BubbleView from './BubbleView';
 
 const sampleHeadlines = [
   {
-    title: 'Coastal cities race to upgrade infrastructure',
-    summary: 'Officials accelerate seawall and grid hardening projects ahead of storm season.',
+    title: 'Farmers brace for season&rsquo;s second mega-storm',
+    summary: 'Officials accelerate seawall &amp; grid hardening projects ahead of storm season.',
     source: 'NPR',
     url: 'https://example.com/npr-infrastructure',
     publishedAt: new Date().toISOString(),
   },
   {
-    title: 'Regulators outline new AI guardrails for frontier labs',
+    title: 'Regulators outline new AI guardrails &amp; resilience tests for frontier labs',
     summary: 'Global agencies sketch synchronized safety rules.',
     source: 'Reuters',
     url: 'https://example.com/reuters-ai',
@@ -50,6 +50,13 @@ describe('BubbleView', () => {
     expect(screen.getByText(/no live headlines/i)).toBeInTheDocument();
   });
 
+  it('decodes headline and summary entities before rendering', () => {
+    render(<BubbleView {...defaultProps} />);
+
+    expect(screen.getByRole('button', { name: /season’s second mega-storm/i })).toBeInTheDocument();
+    expect(screen.getByText(/seawall & grid hardening/i)).toBeInTheDocument();
+  });
+
   it('notifies when a bubble is clicked and surfaces preview actions', async () => {
     const onSelectHeadline = vi.fn();
     const onExploreTopic = vi.fn();
@@ -59,7 +66,7 @@ describe('BubbleView', () => {
       <BubbleView {...defaultProps} onSelectHeadline={onSelectHeadline} onExploreTopic={onExploreTopic} />,
     );
 
-    await user.click(screen.getByRole('button', { name: /coastal cities race/i }));
+    await user.click(screen.getByRole('button', { name: /farmers brace/i }));
     expect(onSelectHeadline).toHaveBeenCalledWith(sampleHeadlines[0]);
 
     rerender(
