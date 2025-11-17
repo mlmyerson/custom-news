@@ -109,8 +109,8 @@ const STANDALONE_SHORT_BLOCKLIST = new Set(['us', 'uk', 'eu']);
 const JUNK_TERMS = new Set(['breaking news', 'live updates', 'top stories', 'morning briefing']);
 const MAX_PHRASE_TOKENS = 3;
 const MAX_OUTPUT = 40;
-const MIN_SCALE = 0.85;
-const MAX_SCALE = 1.35;
+const MIN_SCALE = 0.7;
+const MAX_SCALE = 1.6;
 
 const sanitize = (value: string) =>
   value

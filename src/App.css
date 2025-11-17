@@ -1,3 +1,14 @@
+.app,
+body {
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body {
+  background: linear-gradient(180deg, #f5f6fb 0%, #eef1f9 100%);
+  margin: 0;
+  color: #0f172a;
+}
+
 .app {
   margin: 0 auto;
   min-height: 100vh;
@@ -22,6 +33,25 @@
 .app__lead {
   margin: 0;
   color: #475569;
+}
+
+.app__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  margin-top: 0.75rem;
+  font-size: 0.95rem;
+  color: #0f172a;
+}
+
+.app__meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.05);
+  font-weight: 500;
 }
 
 .view {
