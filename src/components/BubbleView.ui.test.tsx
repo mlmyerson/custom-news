@@ -1,23 +1,76 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import BubbleView from './BubbleView';
 
+const sampleHeadlines = [
+  {
+    title: 'Coastal cities race to upgrade infrastructure',
+    summary: 'Officials accelerate seawall and grid hardening projects ahead of storm season.',
+    source: 'NPR',
+    url: 'https://example.com/npr-infrastructure',
+    publishedAt: new Date().toISOString(),
+  },
+  {
+    title: 'Regulators outline new AI guardrails for frontier labs',
+    summary: 'Global agencies sketch synchronized safety rules.',
+    source: 'Reuters',
+    url: 'https://example.com/reuters-ai',
+    publishedAt: new Date().toISOString(),
+  },
+];
+
+const baseHeadlinesState = {
+  headlines: sampleHeadlines,
+  loading: false,
+  error: undefined,
+  lastUpdated: undefined,
+  refresh: vi.fn(),
+};
+
+const defaultProps = {
+  ...baseHeadlinesState,
+  onSelectHeadline: vi.fn(),
+  onExploreTopic: vi.fn(),
+  selectedHeadline: null,
+};
+
 describe('BubbleView', () => {
-  it('renders the list of sample topics', () => {
-    render(<BubbleView onSelectTopic={() => undefined} />);
+  it('renders a bubble for every available headline', () => {
+  render(<BubbleView {...defaultProps} />);
 
     expect(screen.getByRole('heading', { name: /morning issue radar/i })).toBeInTheDocument();
-    expect(screen.getAllByRole('button').length).toBeGreaterThanOrEqual(4);
+    const bubbleGrid = screen.getByTestId('headline-bubbles');
+    expect(within(bubbleGrid).getAllByRole('listitem')).toHaveLength(sampleHeadlines.length);
   });
 
-  it('notifies when a bubble is clicked', async () => {
-    const onSelectTopic = vi.fn();
+  it('shows an empty state when no headlines are available', () => {
+  render(<BubbleView {...defaultProps} headlines={[]} />);
+
+    expect(screen.getByText(/no live headlines/i)).toBeInTheDocument();
+  });
+
+  it('notifies when a bubble is clicked and surfaces preview actions', async () => {
+    const onSelectHeadline = vi.fn();
+    const onExploreTopic = vi.fn();
     const user = userEvent.setup();
 
-    render(<BubbleView onSelectTopic={onSelectTopic} />);
+    const { rerender } = render(
+      <BubbleView {...defaultProps} onSelectHeadline={onSelectHeadline} onExploreTopic={onExploreTopic} />,
+    );
 
-    await user.click(screen.getByRole('button', { name: /global supply chains/i }));
-    expect(onSelectTopic).toHaveBeenCalledWith('Global Supply Chains');
+    await user.click(screen.getByRole('button', { name: /coastal cities race/i }));
+    expect(onSelectHeadline).toHaveBeenCalledWith(sampleHeadlines[0]);
+
+    rerender(
+      <BubbleView
+        {...defaultProps}
+        selectedHeadline={sampleHeadlines[0]}
+        onSelectHeadline={onSelectHeadline}
+        onExploreTopic={onExploreTopic}
+      />,
+    );
+
+    expect(screen.getByText(/read full article/i)).toBeInTheDocument();
   });
 });
