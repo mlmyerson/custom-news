@@ -68,14 +68,13 @@ const SOURCES_COPY = buildSourceDescription();
 
 export type BubbleViewProps = {
   onSelectHeadline: (headline: Headline) => void;
-  onExploreTopic: (headline: Headline | null) => void;
+  onExploreTopic: () => void;
   selectedHeadline: Headline | null;
 } & UseHeadlinesResult;
 
 const BubbleView = ({ onSelectHeadline, onExploreTopic, selectedHeadline, headlines, loading, error, refresh }: BubbleViewProps) => {
   const visibleHeadlines = useMemo<Headline[]>(() => headlines.slice(0, BUBBLE_LIMIT), [headlines]);
   const panelItems = visibleHeadlines.slice(0, PANEL_COUNT);
-
   return (
     <section className="view bubble-view" aria-labelledby="bubble-view-heading">
       <header className="view__header">
@@ -157,11 +156,7 @@ const BubbleView = ({ onSelectHeadline, onExploreTopic, selectedHeadline, headli
                 <a href={selectedHeadline.url} target="_blank" rel="noreferrer" className="button button--light">
                   Read full article
                 </a>
-                <button
-                  type="button"
-                  className="ghost ghost--inverse"
-                  onClick={() => onExploreTopic(selectedHeadline)}
-                >
+                <button type="button" className="ghost ghost--inverse" onClick={onExploreTopic}>
                   Explore related coverage
                 </button>
               </div>

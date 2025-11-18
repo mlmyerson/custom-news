@@ -45,13 +45,12 @@ const AppShell = () => {
     navigate('bubble');
   };
 
-  const handleShowTopic = (headline: Headline | null) => {
-    if (!headline) {
+  const handleShowTopic = () => {
+    if (!selectedHeadline) {
       return;
     }
 
-    setSelectedHeadline(headline);
-    setSelectedTopic(headline.title);
+    setSelectedTopic(selectedHeadline.title);
     navigate('topic');
   };
 
