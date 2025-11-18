@@ -50,8 +50,8 @@ const AppShell = () => {
       return;
     }
 
-    setSelectedTopic(headline.title);
     setSelectedHeadline(headline);
+    setSelectedTopic(headline.title);
     navigate('topic');
   };
 
