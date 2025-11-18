@@ -4,6 +4,7 @@ import type { UseHeadlinesResult } from '../hooks/useHeadlines';
 import type { Headline } from '../services/fetchHeadlines';
 import { HEADLINE_SOURCE_NAMES } from '../services/fetchHeadlines';
 import { generateMosaic, loadTilingRules, calculateTileDimensions } from '../services/tilingEngine';
+import { calculateBaseTileSize, calculateReadableColumns, MIN_READABLE_TILE_PX } from '../services/tileSizing';
 import type { PlacedTile } from '../types/tile';
 
 const PANEL_COUNT = 6;
@@ -71,16 +72,26 @@ const TileView = ({ onSelectHeadline, onExploreTopic, selectedHeadline, headline
   const [containerWidth, setContainerWidth] = useState<number>(400);
   const visibleHeadlines = useMemo<Headline[]>(() => headlines.slice(0, TILE_LIMIT), [headlines]);
   const panelItems = visibleHeadlines.slice(0, PANEL_COUNT);
-  
+
   const tilingRules = useMemo(() => loadTilingRules(), []);
-  
-  // Determine columns based on container width
-  const columns = useMemo(() => {
+
+  // Determine desired columns based on breakpoints, then ensure each column remains readable
+  const requestedColumns = useMemo(() => {
     if (containerWidth < 640) return tilingRules.gridConfig.mobileColumns;
     if (containerWidth < 1024) return tilingRules.gridConfig.tabletColumns;
     return tilingRules.gridConfig.desktopColumns;
   }, [containerWidth, tilingRules]);
-  
+
+  const columns = useMemo(() => {
+    const { gapPx } = tilingRules.gridConfig;
+    return calculateReadableColumns(containerWidth, requestedColumns, gapPx);
+  }, [containerWidth, requestedColumns, tilingRules]);
+
+  const tileBaseSize = useMemo(() => {
+    const { gapPx } = tilingRules.gridConfig;
+    return calculateBaseTileSize(containerWidth, columns, gapPx);
+  }, [columns, containerWidth, tilingRules]);
+
   const mosaic = useMemo(() => {
     return generateMosaic(visibleHeadlines.length, columns);
   }, [visibleHeadlines.length, columns]);
@@ -129,6 +140,10 @@ const TileView = ({ onSelectHeadline, onExploreTopic, selectedHeadline, headline
           role={visibleHeadlines.length ? 'list' : undefined}
           aria-live="polite"
           data-testid="headline-tiles"
+          style={{
+            '--tile-columns': columns.toString(),
+            '--tile-base-size': `${tileBaseSize}px`,
+          } as CSSProperties}
         >
           {visibleHeadlines.length ? (
             mosaic.tiles.map((tile: PlacedTile) => {
