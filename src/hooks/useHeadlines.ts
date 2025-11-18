@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { fetchHeadlines, type Headline } from '../services/fetchHeadlines';
 
-const buildPlaceholderBackground = (headline: Headline, index: number) => {
+const PLACEHOLDER_VARIANTS = 3;
+
+const buildPlaceholderBackgrounds = (headline: Headline, index: number) => {
   const seedSource = headline.url || headline.title || `tile-${index}`;
   const normalizedSeed = seedSource
     .toString()
@@ -10,14 +12,27 @@ const buildPlaceholderBackground = (headline: Headline, index: number) => {
     .slice(0, 32);
 
   const seed = normalizedSeed || `tile-${index}`;
-  return `https://picsum.photos/seed/${encodeURIComponent(seed)}/900/900`;
+  return Array.from({ length: PLACEHOLDER_VARIANTS }, (_, variant) =>
+    `https://picsum.photos/seed/${encodeURIComponent(`${seed}-${variant}`)}/900/900`,
+  );
 };
 
 const applyBackgrounds = (headlines: Headline[]) =>
-  headlines.map((headline, index) => ({
-    ...headline,
-    backgroundImage: headline.backgroundImage ?? buildPlaceholderBackground(headline, index),
-  }));
+  headlines.map((headline, index) => {
+    const providedImages = Array.isArray(headline.backgroundImages)
+      ? headline.backgroundImages.filter(Boolean)
+      : [];
+    const legacySingle = headline.backgroundImage ? [headline.backgroundImage] : [];
+    const placeholders = buildPlaceholderBackgrounds(headline, index);
+
+    const merged = [...providedImages, ...legacySingle, ...placeholders];
+    const uniqueImages = Array.from(new Set(merged)).slice(0, PLACEHOLDER_VARIANTS);
+
+    return {
+      ...headline,
+      backgroundImages: uniqueImages,
+    };
+  });
 
 export type UseHeadlinesResult = {
   headlines: Headline[];

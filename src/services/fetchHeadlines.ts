@@ -26,6 +26,7 @@ export type Headline = {
   url: string;
   publishedAt: string;
   backgroundImage?: string;
+  backgroundImages?: string[];
 };
 
 type HeadlineFetcher = () => Promise<Headline[]>;

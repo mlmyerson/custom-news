@@ -9,6 +9,8 @@ import type { PlacedTile } from '../types/tile';
 
 const TILE_LIMIT = 30;
 const TILE_TONES = ['tile--tone-amber', 'tile--tone-violet', 'tile--tone-blue', 'tile--tone-teal', 'tile--tone-rose'];
+const TILE_MEDIA_VARIANTS = 3;
+const TILE_MEDIA_STEP_SECONDS = 5;
 
 const clip = (value: string, length = 90) => (value.length > length ? `${value.slice(0, length).trim()}…` : value);
 
@@ -149,13 +151,16 @@ const TileView = ({ onSelectHeadline, onExploreTopic, selectedHeadline, headline
               if (!headline) return null;
               
               const dimensions = calculateTileDimensions(tile.shape, tilingRules, columns, containerWidth);
-              const backgroundImage = headline.backgroundImage ?? null;
+              const backgroundImages = (headline.backgroundImages ?? (headline.backgroundImage ? [headline.backgroundImage] : []))
+                .filter(Boolean)
+                .slice(0, TILE_MEDIA_VARIANTS);
+              const hasMedia = backgroundImages.length > 0;
               
               return (
                 <button
                   key={headline.url}
                   type="button"
-                  className={`tile ${toneClassForIndex(tile.articleIndex)} ${backgroundImage ? 'tile--has-media' : ''} ${selectedHeadline?.url === headline.url ? 'tile--active' : ''}`}
+                  className={`tile ${toneClassForIndex(tile.articleIndex)} ${hasMedia ? 'tile--has-media' : ''} ${selectedHeadline?.url === headline.url ? 'tile--active' : ''}`}
                   role="listitem"
                   style={{
                     '--tile-width': `${dimensions.width}px`,
@@ -165,15 +170,21 @@ const TileView = ({ onSelectHeadline, onExploreTopic, selectedHeadline, headline
                     gridColumn: `${tile.position.col + 1} / span ${tile.shape.width}`,
                     gridRow: `${tile.position.row + 1} / span ${tile.shape.height}`,
                   } as CSSProperties}
-                  data-background-image={backgroundImage ?? undefined}
                   onClick={() => onSelectHeadline(headline)}
                 >
-                  {backgroundImage && (
-                    <span
-                      className="tile__background"
-                      aria-hidden="true"
-                      style={{ backgroundImage: `url(${backgroundImage})` }}
-                    />
+                  {hasMedia && (
+                    <div className="tile__media" aria-hidden="true">
+                      {backgroundImages.map((imageUrl, mediaIndex) => (
+                        <span
+                          key={`${headline.url}-media-${mediaIndex}`}
+                          className="tile__background"
+                          style={{
+                            backgroundImage: `url(${imageUrl})`,
+                            animationDelay: `${mediaIndex * -TILE_MEDIA_STEP_SECONDS}s`,
+                          }}
+                        />
+                      ))}
+                    </div>
                   )}
                   <span className="tile__label">{clip(headline.title)}</span>
                   <span className="tile__badge">{headline.source}</span>
