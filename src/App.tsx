@@ -47,9 +47,12 @@ const AppShell = () => {
   };
 
   const handleShowTopic = () => {
-    if (selectedTopic) {
-      navigate('topic');
+    if (!selectedHeadline) {
+      return;
     }
+
+    setSelectedTopic(selectedHeadline.title);
+    navigate('topic');
   };
 
   const handleBack = () => {

@@ -3,6 +3,7 @@ import { useMemo, type CSSProperties } from 'react';
 import type { UseHeadlinesResult } from '../hooks/useHeadlines';
 import type { Headline } from '../services/fetchHeadlines';
 import { HEADLINE_SOURCE_NAMES } from '../services/fetchHeadlines';
+import { decodeEntities } from '../utils/decodeEntities';
 
 // AGENT TODO let's ditch trying to size and weight the headlines for now. Just simply have a bubble for every headline we pull
 
@@ -11,7 +12,10 @@ const PANEL_COUNT = 6;
 const BUBBLE_LIMIT = 30;
 const BUBBLE_TONES = ['bubble--tone-amber', 'bubble--tone-violet', 'bubble--tone-blue', 'bubble--tone-teal', 'bubble--tone-rose'];
 
-const clip = (value: string, length = 90) => (value.length > length ? `${value.slice(0, length).trim()}…` : value);
+const clip = (value: string, length = 90) => {
+  const decoded = decodeEntities(value);
+  return decoded.length > length ? `${decoded.slice(0, length).trim()}…` : decoded;
+};
 
 const formatSourceList = (sources: string[]) => {
   if (sources.length === 0) {
@@ -71,7 +75,6 @@ export type BubbleViewProps = {
 const BubbleView = ({ onSelectHeadline, onExploreTopic, selectedHeadline, headlines, loading, error, refresh }: BubbleViewProps) => {
   const visibleHeadlines = useMemo<Headline[]>(() => headlines.slice(0, BUBBLE_LIMIT), [headlines]);
   const panelItems = visibleHeadlines.slice(0, PANEL_COUNT);
-
   return (
     <section className="view bubble-view" aria-labelledby="bubble-view-heading">
       <header className="view__header">
@@ -117,7 +120,7 @@ const BubbleView = ({ onSelectHeadline, onExploreTopic, selectedHeadline, headli
                 onClick={() => onSelectHeadline(headline)}
               >
                 <span className="bubble__label">{clip(headline.title)}</span>
-                <span className="bubble__badge">{headline.source}</span>
+                <span className="bubble__badge">{decodeEntities(headline.source)}</span>
               </button>
             ))
           ) : (
@@ -142,11 +145,13 @@ const BubbleView = ({ onSelectHeadline, onExploreTopic, selectedHeadline, headli
           {selectedHeadline ? (
             <article className="article-preview" aria-live="polite">
               <p className="article-preview__meta">
-                <span>{selectedHeadline.source}</span>
+                <span>{decodeEntities(selectedHeadline.source)}</span>
                 {selectedHeadline.publishedAt && <span>· {formatRelativeTime(selectedHeadline.publishedAt)}</span>}
               </p>
-              <h4 className="article-preview__title">{selectedHeadline.title}</h4>
-              {selectedHeadline.summary && <p className="article-preview__summary">{selectedHeadline.summary}</p>}
+              <h4 className="article-preview__title">{decodeEntities(selectedHeadline.title)}</h4>
+              {selectedHeadline.summary && (
+                <p className="article-preview__summary">{decodeEntities(selectedHeadline.summary)}</p>
+              )}
               <div className="article-preview__actions">
                 <a href={selectedHeadline.url} target="_blank" rel="noreferrer" className="button button--light">
                   Read full article
@@ -166,7 +171,7 @@ const BubbleView = ({ onSelectHeadline, onExploreTopic, selectedHeadline, headli
                       <div className="pulse-panel__content">
                         <span className="pulse-panel__label">{clip(headline.title)}</span>
                         <span className="pulse-panel__meta">
-                          {headline.source}
+                          {decodeEntities(headline.source)}
                           {headline.publishedAt && ` · ${formatRelativeTime(headline.publishedAt)}`}
                         </span>
                         {headline.summary && <span className="pulse-panel__quote">“{clip(headline.summary, 120)}”</span>}

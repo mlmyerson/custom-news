@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { searchAllSources } from '../../modules/newsSources';
 import type { Article } from '../types/article';
+import { decodeEntities } from '../utils/decodeEntities';
 
 export type UseArticleSearchResult = {
   articles: Article[];
@@ -9,14 +10,23 @@ export type UseArticleSearchResult = {
   refresh: () => void;
 };
 
+const cleanText = (value: unknown) => {
+  if (typeof value !== 'string') {
+    return '';
+  }
+
+  const trimmed = value.trim();
+  return trimmed ? decodeEntities(trimmed) : '';
+};
+
 const mapToArticles = (items: any[]): Article[] =>
   items
     .filter((item) => typeof item === 'object' && item !== null && typeof item.url === 'string')
     .map((item) => ({
-      title: typeof item.title === 'string' && item.title.trim().length ? item.title.trim() : item.url,
+      title: cleanText(item.title) || item.url,
       url: item.url,
-      source: typeof item.source === 'string' && item.source.trim().length ? item.source.trim() : 'Unknown',
-      snippet: typeof item.snippet === 'string' && item.snippet.trim().length ? item.snippet.trim() : null,
+      source: cleanText(item.source) || 'Unknown',
+      snippet: cleanText(item.snippet) || null,
       published_at: typeof item.published_at === 'string' ? item.published_at : null,
     }));
 
