@@ -7,9 +7,9 @@ describe('useHashRoute', () => {
     window.location.hash = '';
   });
 
-  it('defaults to the bubble route', () => {
+  it('defaults to the tile route', () => {
     const { result } = renderHook(() => useHashRoute());
-    expect(result.current.route).toBe('bubble');
+    expect(result.current.route).toBe('tile');
   });
 
   it('reads the current hash on mount', () => {
@@ -30,5 +30,11 @@ describe('useHashRoute', () => {
     });
 
     expect(window.location.hash).toBe('#topic');
+  });
+
+  it('redirects legacy bubble route to tile route', () => {
+    window.location.hash = '#bubble';
+    const { result } = renderHook(() => useHashRoute());
+    expect(result.current.route).toBe('tile');
   });
 });

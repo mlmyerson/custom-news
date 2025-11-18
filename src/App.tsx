@@ -1,6 +1,6 @@
 import './App.css';
 import { useEffect } from 'react';
-import BubbleView from './components/BubbleView';
+import TileView from './components/TileView';
 import TopicView from './components/TopicView';
 import { useHashRoute } from './hooks/useHashRoute';
 import { useHeadlines } from './hooks/useHeadlines';
@@ -42,7 +42,7 @@ const AppShell = () => {
   const handleSelectHeadline = (headline: Headline) => {
     setSelectedHeadline(headline);
     setSelectedTopic(headline.title);
-    navigate('bubble');
+    navigate('tile');
   };
 
   const handleShowTopic = () => {
@@ -52,7 +52,7 @@ const AppShell = () => {
   };
 
   const handleBack = () => {
-    navigate('bubble');
+    navigate('tile');
   };
 
   return (
@@ -74,8 +74,8 @@ const AppShell = () => {
           </div>
         </header>
 
-        {route === 'bubble' ? (
-          <BubbleView
+        {route === 'tile' ? (
+          <TileView
             {...headlinesState}
             selectedHeadline={selectedHeadline}
             onSelectHeadline={handleSelectHeadline}

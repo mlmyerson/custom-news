@@ -26,15 +26,15 @@ describe('App integration view', () => {
 
   beforeEach(() => {
     vi.spyOn(headlinesService, 'fetchHeadlines').mockResolvedValue(sampleHeadlines);
-    window.location.hash = '#bubble';
+    window.location.hash = '#tile';
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
-    window.location.hash = '#bubble';
+    window.location.hash = '#tile';
   });
 
-  it('renders the bubble map by default and navigates to topic view from preview', async () => {
+  it('renders the tile mosaic by default and navigates to topic view from preview', async () => {
     render(<App />);
 
     expect(screen.getByRole('heading', { name: /see the issues every outlet repeats today/i })).toBeInTheDocument();
@@ -42,7 +42,7 @@ describe('App integration view', () => {
     await user.click(await screen.findByRole('button', { name: /test headline alpha/i }));
 
     expect(screen.getByText(/read full article/i)).toBeInTheDocument();
-    expect(window.location.hash).toBe('#bubble');
+    expect(window.location.hash).toBe('#tile');
 
     await user.click(screen.getByRole('button', { name: /explore related coverage/i }));
 
