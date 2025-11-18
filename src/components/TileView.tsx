@@ -149,12 +149,13 @@ const TileView = ({ onSelectHeadline, onExploreTopic, selectedHeadline, headline
               if (!headline) return null;
               
               const dimensions = calculateTileDimensions(tile.shape, tilingRules, columns, containerWidth);
+              const backgroundImage = headline.backgroundImage ?? null;
               
               return (
                 <button
                   key={headline.url}
                   type="button"
-                  className={`tile ${toneClassForIndex(tile.articleIndex)} ${selectedHeadline?.url === headline.url ? 'tile--active' : ''}`}
+                  className={`tile ${toneClassForIndex(tile.articleIndex)} ${backgroundImage ? 'tile--has-media' : ''} ${selectedHeadline?.url === headline.url ? 'tile--active' : ''}`}
                   role="listitem"
                   style={{
                     '--tile-width': `${dimensions.width}px`,
@@ -164,8 +165,16 @@ const TileView = ({ onSelectHeadline, onExploreTopic, selectedHeadline, headline
                     gridColumn: `${tile.position.col + 1} / span ${tile.shape.width}`,
                     gridRow: `${tile.position.row + 1} / span ${tile.shape.height}`,
                   } as CSSProperties}
+                  data-background-image={backgroundImage ?? undefined}
                   onClick={() => onSelectHeadline(headline)}
                 >
+                  {backgroundImage && (
+                    <span
+                      className="tile__background"
+                      aria-hidden="true"
+                      style={{ backgroundImage: `url(${backgroundImage})` }}
+                    />
+                  )}
                   <span className="tile__label">{clip(headline.title)}</span>
                   <span className="tile__badge">{headline.source}</span>
                 </button>

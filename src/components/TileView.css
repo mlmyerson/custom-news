@@ -63,6 +63,25 @@
   isolation: isolate;
 }
 
+.tile__background {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition: transform 0.35s ease, opacity 0.25s ease, filter 0.35s ease;
+  transform: scale(1.05);
+  filter: brightness(0.85) saturate(0.85);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.tile--has-media .tile__background {
+  opacity: 1;
+}
+
 .tile::after {
   content: '';
   position: absolute;
@@ -78,6 +97,13 @@
 .tile:focus-visible::after,
 .tile--active::after {
   opacity: 0.8;
+}
+
+.tile:hover .tile__background,
+.tile:focus-visible .tile__background,
+.tile--active .tile__background {
+  transform: scale(1.12);
+  filter: brightness(0.95) saturate(1.05);
 }
 
 .tile:focus-visible,

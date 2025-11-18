@@ -1,6 +1,24 @@
 import { useCallback, useEffect, useState } from 'react';
 import { fetchHeadlines, type Headline } from '../services/fetchHeadlines';
 
+const buildPlaceholderBackground = (headline: Headline, index: number) => {
+  const seedSource = headline.url || headline.title || `tile-${index}`;
+  const normalizedSeed = seedSource
+    .toString()
+    .replace(/[^a-z0-9]/gi, '')
+    .toLowerCase()
+    .slice(0, 32);
+
+  const seed = normalizedSeed || `tile-${index}`;
+  return `https://picsum.photos/seed/${encodeURIComponent(seed)}/900/900`;
+};
+
+const applyBackgrounds = (headlines: Headline[]) =>
+  headlines.map((headline, index) => ({
+    ...headline,
+    backgroundImage: headline.backgroundImage ?? buildPlaceholderBackground(headline, index),
+  }));
+
 export type UseHeadlinesResult = {
   headlines: Headline[];
   loading: boolean;
@@ -20,7 +38,7 @@ export const useHeadlines = (): UseHeadlinesResult => {
       setLoading(true);
       try {
         const data = await fetchHeadlines(options);
-        setHeadlines(data);
+        setHeadlines(applyBackgrounds(data));
         setError(undefined);
         setLastUpdated(new Date().toISOString());
       } catch (err) {
