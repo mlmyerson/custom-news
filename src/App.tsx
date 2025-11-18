@@ -1,6 +1,6 @@
 import './App.css';
 import { useEffect } from 'react';
-import BubbleView from './components/BubbleView';
+import TileView from './components/TileView';
 import TopicView from './components/TopicView';
 import ArticleDetailView from './components/ArticleDetailView';
 import { useHashRoute } from './hooks/useHashRoute';
@@ -43,13 +43,25 @@ const AppShell = () => {
   const handleSelectHeadline = (headline: Headline) => {
     setSelectedHeadline(headline);
     setSelectedTopic(headline.title);
-    navigate('article');
+    navigate('tile');
+  };
+
+  const handleExploreTopic = () => {
+    if (!selectedHeadline) {
+      return;
+    }
+
+    const searchUrl = new URL('https://www.google.com/search');
+    searchUrl.searchParams.set('q', selectedHeadline.title);
+    if (typeof window !== 'undefined') {
+      window.open(searchUrl.toString(), '_blank', 'noopener,noreferrer');
+    }
   };
 
 
 
   const handleBack = () => {
-    navigate('bubble');
+    navigate('tile');
   };
 
   return (
@@ -71,11 +83,12 @@ const AppShell = () => {
           </div>
         </header>
 
-        {route === 'bubble' ? (
-          <BubbleView
+        {route === 'tile' ? (
+          <TileView
             {...headlinesState}
             selectedHeadline={selectedHeadline}
             onSelectHeadline={handleSelectHeadline}
+            onExploreTopic={handleExploreTopic}
           />
         ) : route === 'article' ? (
           <ArticleDetailView

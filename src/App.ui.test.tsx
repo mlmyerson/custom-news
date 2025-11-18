@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
@@ -26,62 +26,49 @@ describe('App integration view', () => {
 
   beforeEach(() => {
     vi.spyOn(headlinesService, 'fetchHeadlines').mockResolvedValue(sampleHeadlines);
-    window.location.hash = '#bubble';
+    window.location.hash = '#tile';
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
-    window.location.hash = '#bubble';
+    window.location.hash = '#tile';
   });
 
-  it('renders the bubble map by default and navigates to article detail view on bubble click', async () => {
+  it('renders the tile mosaic by default and keeps the user on #tile when a tile is selected', async () => {
     render(<App />);
 
     expect(screen.getByRole('heading', { name: /see the issues every outlet repeats today/i })).toBeInTheDocument();
+    expect(window.location.hash).toBe('#tile');
 
     await user.click(await screen.findByRole('button', { name: /test headline alpha/i }));
 
-    expect(screen.getByRole('heading', { name: sampleHeadlines[0].title })).toBeInTheDocument();
-    expect(screen.getByText(/article details/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /read full article/i })).toBeInTheDocument();
-    expect(window.location.hash).toBe('#article');
+    expect(screen.getByText(/read full article/i)).toBeInTheDocument();
+    expect(window.location.hash).toBe('#tile');
   });
 
-  it('redirects to Google search when "Explore Related Coverage" is clicked from bubble preview', async () => {
+  it('opens a Google search when Explore Related Coverage is clicked from the tile preview', async () => {
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(null);
     render(<App />);
 
-    // Wait for headlines to load and click on the first bubble
     await user.click(await screen.findByRole('button', { name: /test headline alpha/i }));
+    await user.click(screen.getByRole('button', { name: /explore related coverage/i }));
 
-    // Verify we're on the article preview (in bubble view)
-    expect(await screen.findByText(/read full article/i)).toBeInTheDocument();
-    
-    // Find the "Explore Related Coverage" link
-    const exploreLink = screen.getByRole('link', { name: /explore related coverage/i });
-    expect(exploreLink).toBeInTheDocument();
-
-    // Verify the link points to a Google search with the article title
     const expectedUrl = `https://www.google.com/search?q=${encodeURIComponent(sampleHeadlines[0].title)}`;
-    expect(exploreLink).toHaveAttribute('href', expectedUrl);
-    expect(exploreLink).toHaveAttribute('target', '_blank');
-    expect(exploreLink).toHaveAttribute('rel', 'noreferrer');
+    expect(openSpy).toHaveBeenCalledWith(expectedUrl, '_blank', 'noopener,noreferrer');
+    openSpy.mockRestore();
   });
 
-  it('redirects to Google search when "Explore Related Coverage" is clicked from article detail view', async () => {
+  it('links to Google search when viewing the article detail route', async () => {
     render(<App />);
 
-    // Click on a bubble to go to article detail view
     await user.click(await screen.findByRole('button', { name: /test headline alpha/i }));
 
-    // Verify we're in the article detail view
-    expect(await screen.findByText(/read full article/i)).toBeInTheDocument();
-    expect(window.location.hash).toBe('#article');
+    act(() => {
+      window.location.hash = '#article';
+      window.dispatchEvent(new HashChangeEvent('hashchange'));
+    });
 
-    // Find the "Explore Related Coverage" link in article detail view
-    const exploreLink = screen.getByRole('link', { name: /explore related coverage/i });
-    expect(exploreLink).toBeInTheDocument();
-
-    // Verify the link points to a Google search with the article title
+    const exploreLink = await screen.findByRole('link', { name: /explore related coverage/i });
     const expectedUrl = `https://www.google.com/search?q=${encodeURIComponent(sampleHeadlines[0].title)}`;
     expect(exploreLink).toHaveAttribute('href', expectedUrl);
     expect(exploreLink).toHaveAttribute('target', '_blank');

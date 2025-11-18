@@ -1,18 +1,27 @@
 import { useCallback, useEffect, useState } from 'react';
 
-export type RouteName = 'bubble' | 'topic' | 'article';
+export type RouteName = 'tile' | 'topic' | 'article';
 
-const DEFAULT_ROUTE: RouteName = 'bubble';
+const DEFAULT_ROUTE: RouteName = 'tile';
 
 const parseRouteFromHash = (hash: string): RouteName => {
-  const routeStr = hash.replace('#', '');
-  
-  if (routeStr === 'topic') {
+  const hashValue = hash.replace('#', '');
+
+  if (hashValue === 'topic') {
     return 'topic';
   }
-  
-  if (routeStr === 'article') {
+
+  if (hashValue === 'article') {
     return 'article';
+  }
+
+  // Support legacy 'bubble' route for backwards compatibility
+  if (hashValue === 'bubble') {
+    return 'tile';
+  }
+
+  if (hashValue === 'tile') {
+    return 'tile';
   }
 
   return DEFAULT_ROUTE;
