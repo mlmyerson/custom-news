@@ -7,7 +7,6 @@ import { generateMosaic, loadTilingRules, calculateTileDimensions } from '../ser
 import { calculateBaseTileSize, calculateReadableColumns, MIN_READABLE_TILE_PX } from '../services/tileSizing';
 import type { PlacedTile } from '../types/tile';
 
-const PANEL_COUNT = 6;
 const TILE_LIMIT = 30;
 const TILE_TONES = ['tile--tone-amber', 'tile--tone-violet', 'tile--tone-blue', 'tile--tone-teal', 'tile--tone-rose'];
 
@@ -71,7 +70,6 @@ export type TileViewProps = {
 const TileView = ({ onSelectHeadline, onExploreTopic, selectedHeadline, headlines, loading, error, refresh }: TileViewProps) => {
   const [containerWidth, setContainerWidth] = useState<number>(400);
   const visibleHeadlines = useMemo<Headline[]>(() => headlines.slice(0, TILE_LIMIT), [headlines]);
-  const panelItems = visibleHeadlines.slice(0, PANEL_COUNT);
 
   const tilingRules = useMemo(() => loadTilingRules(), []);
 
@@ -182,56 +180,46 @@ const TileView = ({ onSelectHeadline, onExploreTopic, selectedHeadline, headline
 
         <aside className="pulse-panel" aria-labelledby="pulse-panel-heading">
           <div className="pulse-panel__header">
-            <p className="eyebrow">Article preview</p>
-            <h3 id="pulse-panel-heading">{selectedHeadline ? 'You tapped a live headline' : 'Select a tile to preview'}</h3>
+            <p className="eyebrow">Articles</p>
+            <h3 id="pulse-panel-heading">All articles we've pulled</h3>
             <p className="pulse-panel__description">
-              {selectedHeadline
-                ? 'Read the original reporting or jump into the aggregated topic view for deeper coverage.'
-                : panelItems.length
-                  ? 'Pick any tile to see full article details without leaving the mosaic.'
-                  : 'Waiting for live headlines to populate this panel.'}
+              {visibleHeadlines.length
+                ? 'Read the original reporting or explore related coverage for any article.'
+                : 'Waiting for live headlines to populate this panel.'}
             </p>
           </div>
-          {selectedHeadline ? (
-            <article className="article-preview" aria-live="polite">
-              <p className="article-preview__meta">
-                <span>{selectedHeadline.source}</span>
-                {selectedHeadline.publishedAt && <span>· {formatRelativeTime(selectedHeadline.publishedAt)}</span>}
-              </p>
-              <h4 className="article-preview__title">{selectedHeadline.title}</h4>
-              {selectedHeadline.summary && <p className="article-preview__summary">{selectedHeadline.summary}</p>}
-              <div className="article-preview__actions">
-                <a href={selectedHeadline.url} target="_blank" rel="noreferrer" className="button button--light">
-                  Read full article
-                </a>
-                <button type="button" className="ghost ghost--inverse" onClick={onExploreTopic}>
-                  Explore related coverage
-                </button>
-              </div>
-            </article>
-          ) : (
-            <ol className="pulse-panel__list">
-              {panelItems.length ? (
-                panelItems.map((headline, index) => (
-                  <li key={headline.url} className="pulse-panel__item">
-                    <button type="button" onClick={() => onSelectHeadline(headline)}>
-                      <span className="pulse-panel__rank">{index + 1}</span>
-                      <div className="pulse-panel__content">
-                        <span className="pulse-panel__label">{clip(headline.title)}</span>
-                        <span className="pulse-panel__meta">
-                          {headline.source}
-                          {headline.publishedAt && ` · ${formatRelativeTime(headline.publishedAt)}`}
-                        </span>
-                        {headline.summary && <span className="pulse-panel__quote">"{clip(headline.summary, 120)}"</span>}
+          <ol className="pulse-panel__list">
+            {visibleHeadlines.length ? (
+              visibleHeadlines.map((headline, index) => (
+                <li key={headline.url} className="pulse-panel__item">
+                  <div className="pulse-panel__article">
+                    <span className="pulse-panel__rank">{index + 1}</span>
+                    <div className="pulse-panel__content">
+                      <span className="pulse-panel__label">{clip(headline.title)}</span>
+                      <span className="pulse-panel__meta">
+                        {headline.source}
+                        {headline.publishedAt && ` · ${formatRelativeTime(headline.publishedAt)}`}
+                      </span>
+                      {headline.summary && <span className="pulse-panel__quote">"{clip(headline.summary, 120)}"</span>}
+                      <div className="pulse-panel__actions">
+                        <a href={headline.url} target="_blank" rel="noreferrer" className="button button--light">
+                          Read full article
+                        </a>
+                        <button type="button" className="ghost ghost--inverse" onClick={() => {
+                          onSelectHeadline(headline);
+                          onExploreTopic();
+                        }}>
+                          Explore related coverage
+                        </button>
                       </div>
-                    </button>
-                  </li>
-                ))
-              ) : (
-                <li className="pulse-panel__empty">No headlines ready yet. Refresh the sources to populate this panel.</li>
-              )}
-            </ol>
-          )}
+                    </div>
+                  </div>
+                </li>
+              ))
+            ) : (
+              <li className="pulse-panel__empty">No headlines ready yet. Refresh the sources to populate this panel.</li>
+            )}
+          </ol>
         </aside>
       </div>
     </section>
