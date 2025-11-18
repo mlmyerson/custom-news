@@ -155,12 +155,17 @@
 @media (min-width: 1024px) {
   .tile-view__body {
     flex-direction: row;
-    align-items: stretch;
+    align-items: flex-start;
+  }
+
+  .tile-view__mosaic {
+    flex: 1 1 auto;
   }
 
   .pulse-panel {
     width: min(320px, 100%);
-    align-self: stretch;
+    align-self: flex-start;
+    flex-shrink: 0;
   }
 
   .tile__label {
