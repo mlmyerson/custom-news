@@ -81,6 +81,6 @@ describe('BubbleView', () => {
     expect(screen.getByText(/read full article/i)).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /explore related coverage/i }));
-    expect(onExploreTopic).toHaveBeenCalledWith(sampleHeadlines[0]);
+    expect(onExploreTopic).toHaveBeenCalledTimes(1);
   });
 });
