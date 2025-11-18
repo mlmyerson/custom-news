@@ -1,0 +1,15 @@
+reference design.md
+create tiles instead of bubbles 
+create a json file that specifies how the tiling rules work so we can tweak it easily
+write tests for the work that you do
+write tests for the tiling system that reads a rule file and applies it to tiling the mosaic 
+
+
+article preview is renamed "Articles"
+it is a list of all the articles we've pulled
+each article entry in the list has functional "read full article" and "explore related coverage" buttons under it
+
+reference design.md
+use a library to pull keywords from the article
+use the keywords to search for images from google
+pull several images and apply them to the tiles in the way the design doc prescribes
