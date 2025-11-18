@@ -50,11 +50,9 @@ const AppShell = () => {
       return;
     }
 
-    const searchUrl = new URL('https://www.google.com/search');
-    searchUrl.searchParams.set('q', headline.title);
-    if (typeof window !== 'undefined') {
-      window.open(searchUrl.toString(), '_blank', 'noopener,noreferrer');
-    }
+    setSelectedHeadline(headline);
+    setSelectedTopic(headline.title);
+    navigate('topic');
   };
 
   const handleBack = () => {
