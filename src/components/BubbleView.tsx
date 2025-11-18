@@ -68,11 +68,10 @@ const SOURCES_COPY = buildSourceDescription();
 
 export type BubbleViewProps = {
   onSelectHeadline: (headline: Headline) => void;
-  onExploreTopic: () => void;
   selectedHeadline: Headline | null;
 } & UseHeadlinesResult;
 
-const BubbleView = ({ onSelectHeadline, onExploreTopic, selectedHeadline, headlines, loading, error, refresh }: BubbleViewProps) => {
+const BubbleView = ({ onSelectHeadline, selectedHeadline, headlines, loading, error, refresh }: BubbleViewProps) => {
   const visibleHeadlines = useMemo<Headline[]>(() => headlines.slice(0, BUBBLE_LIMIT), [headlines]);
   const panelItems = visibleHeadlines.slice(0, PANEL_COUNT);
   return (
@@ -156,9 +155,14 @@ const BubbleView = ({ onSelectHeadline, onExploreTopic, selectedHeadline, headli
                 <a href={selectedHeadline.url} target="_blank" rel="noreferrer" className="button button--light">
                   Read full article
                 </a>
-                <button type="button" className="ghost ghost--inverse" onClick={onExploreTopic}>
+                <a 
+                  href={`https://www.google.com/search?q=${encodeURIComponent(selectedHeadline.title)}`}
+                  target="_blank" 
+                  rel="noreferrer" 
+                  className="ghost ghost--inverse"
+                >
                   Explore related coverage
-                </button>
+                </a>
               </div>
             </article>
           ) : (

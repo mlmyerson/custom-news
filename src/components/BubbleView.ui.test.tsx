@@ -31,7 +31,6 @@ const baseHeadlinesState = {
 const defaultProps = {
   ...baseHeadlinesState,
   onSelectHeadline: vi.fn(),
-  onExploreTopic: vi.fn(),
   selectedHeadline: null,
 };
 
@@ -59,11 +58,10 @@ describe('BubbleView', () => {
 
   it('notifies when a bubble is clicked and surfaces preview actions', async () => {
     const onSelectHeadline = vi.fn();
-    const onExploreTopic = vi.fn();
     const user = userEvent.setup();
 
     const { rerender } = render(
-      <BubbleView {...defaultProps} onSelectHeadline={onSelectHeadline} onExploreTopic={onExploreTopic} />,
+      <BubbleView {...defaultProps} onSelectHeadline={onSelectHeadline} />,
     );
 
     await user.click(screen.getByRole('button', { name: /farmers brace/i }));
@@ -74,13 +72,17 @@ describe('BubbleView', () => {
         {...defaultProps}
         selectedHeadline={sampleHeadlines[0]}
         onSelectHeadline={onSelectHeadline}
-        onExploreTopic={onExploreTopic}
       />,
     );
 
     expect(screen.getByText(/read full article/i)).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /explore related coverage/i }));
-    expect(onExploreTopic).toHaveBeenCalledTimes(1);
+    // Verify the "Explore Related Coverage" link exists and points to Google search
+    const exploreLink = screen.getByRole('link', { name: /explore related coverage/i });
+    expect(exploreLink).toBeInTheDocument();
+    const expectedUrl = `https://www.google.com/search?q=${encodeURIComponent(sampleHeadlines[0].title)}`;
+    expect(exploreLink).toHaveAttribute('href', expectedUrl);
+    expect(exploreLink).toHaveAttribute('target', '_blank');
+    expect(exploreLink).toHaveAttribute('rel', 'noreferrer');
   });
 });

@@ -46,14 +46,7 @@ const AppShell = () => {
     navigate('article');
   };
 
-  const handleShowTopic = () => {
-    if (!selectedHeadline) {
-      return;
-    }
 
-    setSelectedTopic(selectedHeadline.title);
-    navigate('topic');
-  };
 
   const handleBack = () => {
     navigate('bubble');
@@ -83,13 +76,11 @@ const AppShell = () => {
             {...headlinesState}
             selectedHeadline={selectedHeadline}
             onSelectHeadline={handleSelectHeadline}
-            onExploreTopic={handleShowTopic}
           />
         ) : route === 'article' ? (
           <ArticleDetailView
             article={selectedHeadline}
             onBack={handleBack}
-            onExploreTopic={handleShowTopic}
           />
         ) : (
           <TopicView topic={selectedTopic} onBack={handleBack} {...articleSearchState} />

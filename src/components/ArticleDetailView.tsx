@@ -4,7 +4,6 @@ import type { Headline } from '../services/fetchHeadlines';
 export type ArticleDetailViewProps = {
   article: Headline | null;
   onBack: () => void;
-  onExploreTopic: () => void;
 };
 
 const formatRelativeTime = (iso?: string) => {
@@ -36,7 +35,7 @@ const formatRelativeTime = (iso?: string) => {
   return `${diffDays}d ago`;
 };
 
-const ArticleDetailView = ({ article, onBack, onExploreTopic }: ArticleDetailViewProps) => {
+const ArticleDetailView = ({ article, onBack }: ArticleDetailViewProps) => {
   if (!article) {
     return (
       <section className="view article-detail-view" aria-labelledby="article-detail-heading">
@@ -114,13 +113,14 @@ const ArticleDetailView = ({ article, onBack, onExploreTopic }: ArticleDetailVie
             >
               Read Full Article →
             </a>
-            <button 
-              type="button" 
-              className="button button--secondary" 
-              onClick={onExploreTopic}
+            <a 
+              href={`https://www.google.com/search?q=${encodeURIComponent(article.title)}`}
+              target="_blank" 
+              rel="noreferrer" 
+              className="button button--secondary"
             >
               Explore Related Coverage
-            </button>
+            </a>
           </div>
         </article>
       </div>
