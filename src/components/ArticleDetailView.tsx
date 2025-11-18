@@ -4,7 +4,7 @@ import type { Headline } from '../services/fetchHeadlines';
 export type ArticleDetailViewProps = {
   article: Headline | null;
   onBack: () => void;
-  onExploreTopic: () => void;
+  onExploreTopic: (headline: Headline | null) => void;
 };
 
 const formatRelativeTime = (iso?: string) => {
@@ -117,7 +117,7 @@ const ArticleDetailView = ({ article, onBack, onExploreTopic }: ArticleDetailVie
             <button 
               type="button" 
               className="button button--secondary" 
-              onClick={onExploreTopic}
+              onClick={() => onExploreTopic(article)}
             >
               Explore Related Coverage
             </button>
