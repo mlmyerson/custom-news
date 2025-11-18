@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
@@ -39,12 +39,18 @@ describe('App integration view', () => {
 
     expect(screen.getByRole('heading', { name: /see the issues every outlet repeats today/i })).toBeInTheDocument();
 
-    await user.click(await screen.findByRole('button', { name: /test headline alpha/i }));
+    // Find tile button that contains the headline text
+    const tiles = await screen.findByTestId('headline-tiles');
+    const tileButtons = within(tiles).getAllByRole('listitem');
+    await user.click(tileButtons[0]);
 
-    expect(screen.getByText(/read full article/i)).toBeInTheDocument();
+    // All articles should have "Read full article" links
+    expect(screen.getAllByText(/read full article/i).length).toBeGreaterThan(0);
     expect(window.location.hash).toBe('#tile');
 
-    await user.click(screen.getByRole('button', { name: /explore related coverage/i }));
+    // Click the first "Explore related coverage" button
+    const exploreButtons = screen.getAllByRole('button', { name: /explore related coverage/i });
+    await user.click(exploreButtons[0]);
 
     expect(screen.getByRole('heading', { name: sampleHeadlines[0].title })).toBeInTheDocument();
     expect(window.location.hash).toBe('#topic');

@@ -251,67 +251,7 @@ describe('TileView', () => {
     expect(refreshButton).toBeDisabled();
   });
 
-  it('shows article preview when headline is selected', () => {
-    render(
-      <TileView
-        headlines={mockHeadlines}
-        loading={false}
-        error={undefined}
-        lastUpdated={undefined}
-        refresh={mockRefresh}
-        onSelectHeadline={mockOnSelectHeadline}
-        onExploreTopic={mockOnExploreTopic}
-        selectedHeadline={mockHeadlines[0]}
-      />
-    );
-
-    // Check preview panel shows selected headline
-    const previewSection = screen.getByRole('article', { name: undefined });
-    expect(within(previewSection).getByText(mockHeadlines[0].title)).toBeInTheDocument();
-    expect(within(previewSection).getByText(mockHeadlines[0].summary!)).toBeInTheDocument();
-  });
-
-  it('shows link to read full article', () => {
-    render(
-      <TileView
-        headlines={mockHeadlines}
-        loading={false}
-        error={undefined}
-        lastUpdated={undefined}
-        refresh={mockRefresh}
-        onSelectHeadline={mockOnSelectHeadline}
-        onExploreTopic={mockOnExploreTopic}
-        selectedHeadline={mockHeadlines[0]}
-      />
-    );
-
-    const link = screen.getByRole('link', { name: /Read full article/i });
-    expect(link).toHaveAttribute('href', mockHeadlines[0].url);
-    expect(link).toHaveAttribute('target', '_blank');
-  });
-
-  it('calls onExploreTopic when explore button is clicked', async () => {
-    const user = userEvent.setup();
-    render(
-      <TileView
-        headlines={mockHeadlines}
-        loading={false}
-        error={undefined}
-        lastUpdated={undefined}
-        refresh={mockRefresh}
-        onSelectHeadline={mockOnSelectHeadline}
-        onExploreTopic={mockOnExploreTopic}
-        selectedHeadline={mockHeadlines[0]}
-      />
-    );
-
-    const exploreButton = screen.getByRole('button', { name: /Explore related coverage/i });
-    await user.click(exploreButton);
-
-    expect(mockOnExploreTopic).toHaveBeenCalledTimes(1);
-  });
-
-  it('shows preview list when no headline is selected', () => {
+  it('shows all articles in the articles panel', () => {
     render(
       <TileView
         headlines={mockHeadlines}
@@ -325,15 +265,80 @@ describe('TileView', () => {
       />
     );
 
-    // First 6 headlines should be in preview list
-    const previewLists = screen.getAllByRole('list');
-    // One is the tile list, one is the preview list
-    expect(previewLists.length).toBe(2);
+    // Check panel shows "Articles" heading
+    expect(screen.getByText('Articles')).toBeInTheDocument();
+    expect(screen.getByText(/All articles we've pulled/)).toBeInTheDocument();
     
-    // Check that preview list has items
-    const previewList = previewLists[1]; // Second list is the preview list
-    const previewItems = within(previewList).getAllByRole('listitem');
-    expect(previewItems.length).toBeGreaterThan(0);
+    // All articles should be visible - they appear in both tiles and list
+    expect(screen.getAllByText(mockHeadlines[0].title).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(mockHeadlines[1].title).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(mockHeadlines[2].title).length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('shows link to read full article for each article', () => {
+    render(
+      <TileView
+        headlines={mockHeadlines}
+        loading={false}
+        error={undefined}
+        lastUpdated={undefined}
+        refresh={mockRefresh}
+        onSelectHeadline={mockOnSelectHeadline}
+        onExploreTopic={mockOnExploreTopic}
+        selectedHeadline={null}
+      />
+    );
+
+    const links = screen.getAllByRole('link', { name: /Read full article/i });
+    expect(links).toHaveLength(mockHeadlines.length);
+    expect(links[0]).toHaveAttribute('href', mockHeadlines[0].url);
+    expect(links[0]).toHaveAttribute('target', '_blank');
+  });
+
+  it('calls onExploreTopic when explore button is clicked', async () => {
+    const user = userEvent.setup();
+    render(
+      <TileView
+        headlines={mockHeadlines}
+        loading={false}
+        error={undefined}
+        lastUpdated={undefined}
+        refresh={mockRefresh}
+        onSelectHeadline={mockOnSelectHeadline}
+        onExploreTopic={mockOnExploreTopic}
+        selectedHeadline={null}
+      />
+    );
+
+    const exploreButtons = screen.getAllByRole('button', { name: /Explore related coverage/i });
+    await user.click(exploreButtons[0]);
+
+    expect(mockOnSelectHeadline).toHaveBeenCalledWith(mockHeadlines[0]);
+    expect(mockOnExploreTopic).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows articles list with all articles', () => {
+    render(
+      <TileView
+        headlines={mockHeadlines}
+        loading={false}
+        error={undefined}
+        lastUpdated={undefined}
+        refresh={mockRefresh}
+        onSelectHeadline={mockOnSelectHeadline}
+        onExploreTopic={mockOnExploreTopic}
+        selectedHeadline={null}
+      />
+    );
+
+    // Both tiles and articles should be in lists
+    const allLists = screen.getAllByRole('list');
+    expect(allLists.length).toBe(2);
+    
+    // Check that articles list has all items
+    const articlesList = allLists[1]; // Second list is the articles list
+    const articleItems = within(articlesList).getAllByRole('listitem');
+    expect(articleItems.length).toBe(mockHeadlines.length);
   });
 
   it('limits tiles to TILE_LIMIT', () => {
