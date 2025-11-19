@@ -68,12 +68,6 @@ const AppShell = () => {
     <>
       <main className="app">
         <header className="app__header">
-          <p className="eyebrow">Morning Issue Mosaic</p>
-          <h1>See the issues every outlet repeats today</h1>
-          <p className="app__lead">
-            We cluster Guardian, NYT, NPR, and Reuters headlines into weighted phrases so you can scan the daily news landscape
-            in seconds.
-          </p>
           <div className="app__meta" role="status" aria-live="polite">
             <span>
               {lastUpdated ? `Updated ${formatUpdatedAt(lastUpdated)}` : loading ? 'Fetching latest radar…' : 'Using cached radar'}
