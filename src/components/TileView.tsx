@@ -1,0 +1,282 @@
+import './TileView.css';
+import { useMemo, useEffect, useState, type CSSProperties } from 'react';
+import type { UseHeadlinesResult } from '../hooks/useHeadlines';
+import type { Headline } from '../services/fetchHeadlines';
+import { HEADLINE_SOURCE_NAMES } from '../services/fetchHeadlines';
+import { generateMosaic, loadTilingRules, calculateTileDimensions } from '../services/tilingEngine';
+import { calculateBaseTileSize, calculateReadableColumns } from '../services/tileSizing';
+import type { PlacedTile } from '../types/tile';
+
+const TILE_LIMIT = 30;
+const TILE_TONES = ['tile--tone-amber', 'tile--tone-violet', 'tile--tone-blue', 'tile--tone-teal', 'tile--tone-rose'];
+const TILE_MEDIA_VARIANTS = 3;
+const TILE_MEDIA_STEP_SECONDS = 5;
+const TILE_MEDIA_STAGGER_RANGE_SECONDS = TILE_MEDIA_VARIANTS * TILE_MEDIA_STEP_SECONDS; // full cycle length
+
+const hashString = (value: string) => {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash << 5) - hash + value.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+};
+
+const clip = (value: string, length = 90) => (value.length > length ? `${value.slice(0, length).trim()}…` : value);
+
+const formatSourceList = (sources: string[]) => {
+  if (sources.length === 0) {
+    return 'our live sources';
+  }
+  if (sources.length === 1) {
+    return sources[0];
+  }
+  if (sources.length === 2) {
+    return `${sources[0]} and ${sources[1]}`;
+  }
+  return `${sources.slice(0, -1).join(', ')}, and ${sources[sources.length - 1]}`;
+};
+
+const formatRelativeTime = (iso?: string) => {
+  if (!iso) {
+    return '';
+  }
+
+  const timestamp = Date.parse(iso);
+  if (Number.isNaN(timestamp)) {
+    return '';
+  }
+
+  const diffMs = Date.now() - timestamp;
+  const diffMinutes = Math.round(diffMs / 60000);
+
+  if (diffMinutes < 1) {
+    return 'Just now';
+  }
+  if (diffMinutes < 60) {
+    return `${diffMinutes}m ago`;
+  }
+
+  const diffHours = Math.round(diffMinutes / 60);
+  if (diffHours < 24) {
+    return `${diffHours}h ago`;
+  }
+
+  const diffDays = Math.round(diffHours / 24);
+  return `${diffDays}d ago`;
+};
+
+const toneClassForIndex = (index: number) => TILE_TONES[index % TILE_TONES.length];
+
+const buildSourceDescription = () =>
+  `Headlines from ${formatSourceList(HEADLINE_SOURCE_NAMES)} now appear as tiles in a mosaic layout — each tile is one live story. Tap a tile to preview the original article or dive into the topic view.`;
+
+const SOURCES_COPY = buildSourceDescription();
+
+export type TileViewProps = {
+  onSelectHeadline: (headline: Headline) => void;
+  onExploreTopic: () => void;
+  selectedHeadline: Headline | null;
+} & UseHeadlinesResult;
+
+const TileView = ({ onSelectHeadline, onExploreTopic, selectedHeadline, headlines, loading, error, refresh }: TileViewProps) => {
+  const [containerWidth, setContainerWidth] = useState<number>(400);
+  const visibleHeadlines = useMemo<Headline[]>(() => headlines.slice(0, TILE_LIMIT), [headlines]);
+
+  const tilingRules = useMemo(() => loadTilingRules(), []);
+
+  // Determine desired columns based on breakpoints, then ensure each column remains readable
+  const requestedColumns = useMemo(() => {
+    if (containerWidth < 640) return tilingRules.gridConfig.mobileColumns;
+    if (containerWidth < 1024) return tilingRules.gridConfig.tabletColumns;
+    return tilingRules.gridConfig.desktopColumns;
+  }, [containerWidth, tilingRules]);
+
+  const columns = useMemo(() => {
+    const { gapPx } = tilingRules.gridConfig;
+    return calculateReadableColumns(containerWidth, requestedColumns, gapPx);
+  }, [containerWidth, requestedColumns, tilingRules]);
+
+  const tileBaseSize = useMemo(() => {
+    const { gapPx } = tilingRules.gridConfig;
+    return calculateBaseTileSize(containerWidth, columns, gapPx);
+  }, [columns, containerWidth, tilingRules]);
+
+  const mosaic = useMemo(() => {
+    return generateMosaic(visibleHeadlines.length, columns);
+  }, [visibleHeadlines.length, columns]);
+  
+  // Measure container width
+  useEffect(() => {
+    const measureWidth = () => {
+      const container = document.querySelector('.tile-view__mosaic');
+      if (container) {
+        setContainerWidth(container.clientWidth);
+      }
+    };
+    
+    // Debounce resize events to reduce performance impact
+    let timeoutId: NodeJS.Timeout;
+    const debouncedMeasureWidth = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(measureWidth, 150);
+    };
+    
+    measureWidth();
+    window.addEventListener('resize', debouncedMeasureWidth);
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('resize', debouncedMeasureWidth);
+    };
+  }, []);
+
+  return (
+    <section className="view tile-view" aria-labelledby="tile-view-heading">
+      <header className="view__header">
+        <div>
+          <p className="eyebrow">Live sources</p>
+          <h2 id="tile-view-heading">Morning Issue Mosaic</h2>
+        </div>
+        <div className="tile-view__status">
+          <p className="view__description">
+            {SOURCES_COPY}
+          </p>
+          <div className="tile-view__actions">
+            <button type="button" className="ghost" onClick={refresh} disabled={loading}>
+              Refresh mosaic
+            </button>
+            {loading && <span className="muted" aria-live="polite">Loading…</span>}
+            {error && !loading && (
+              <span className="tile-view__error" role="status">
+                {error}
+              </span>
+            )}
+          </div>
+        </div>
+      </header>
+      <div className="tile-view__body">
+        <div
+          className="tile-view__mosaic"
+          role={visibleHeadlines.length ? 'list' : undefined}
+          aria-live="polite"
+          data-testid="headline-tiles"
+          style={{
+            '--tile-columns': columns.toString(),
+            '--tile-base-size': `${tileBaseSize}px`,
+          } as CSSProperties}
+        >
+          {visibleHeadlines.length ? (
+            mosaic.tiles.map((tile: PlacedTile) => {
+              const headline = visibleHeadlines[tile.articleIndex];
+              if (!headline) return null;
+              
+              const dimensions = calculateTileDimensions(tile.shape, tilingRules, columns, containerWidth);
+              const backgroundImages = (headline.backgroundImages ?? (headline.backgroundImage ? [headline.backgroundImage] : []))
+                .filter(Boolean)
+                .slice(0, TILE_MEDIA_VARIANTS);
+              const hasMedia = backgroundImages.length > 0;
+              
+              const classNames = [
+                'tile',
+                toneClassForIndex(tile.articleIndex),
+                hasMedia ? 'tile--has-media' : 'tile--no-media',
+                selectedHeadline?.url === headline.url ? 'tile--active' : '',
+              ]
+                .filter(Boolean)
+                .join(' ');
+
+              // Deterministic stagger keeps tile cycles desynced but stable per headline
+              const cycleOffsetSeconds = ((hashString(headline.url) % 1000) / 1000) * TILE_MEDIA_STAGGER_RANGE_SECONDS;
+
+              return (
+                <button
+                  key={`${tile.id}-${headline.url}`}
+                  type="button"
+                  className={classNames}
+                  role="listitem"
+                  aria-label={`Select article: ${headline.title}`}
+                  style={{
+                    '--tile-width': `${dimensions.width}px`,
+                    '--tile-height': `${dimensions.height}px`,
+                    '--tile-row': tile.position.row,
+                    '--tile-col': tile.position.col,
+                    gridColumn: `${tile.position.col + 1} / span ${tile.shape.width}`,
+                    gridRow: `${tile.position.row + 1} / span ${tile.shape.height}`,
+                  } as CSSProperties}
+                  onClick={() => onSelectHeadline(headline)}
+                >
+                  {hasMedia && (
+                    <div className="tile__media" aria-hidden="true">
+                      {backgroundImages.map((imageUrl, mediaIndex) => (
+                        <span
+                          key={`${headline.url}-media-${mediaIndex}`}
+                          className="tile__background"
+                          style={{
+                            backgroundImage: `url(${imageUrl})`,
+                            animationDelay: `${cycleOffsetSeconds - mediaIndex * TILE_MEDIA_STEP_SECONDS}s`,
+                          }}
+                        />
+                      ))}
+                    </div>
+                  )}
+                  <span className="tile__label">{clip(headline.title)}</span>
+                  <span className="tile__badge">{headline.source}</span>
+                </button>
+              );
+            })
+          ) : (
+            <p className="tile-view__empty" role="status">
+              {loading ? 'Generating mosaic…' : error ? 'Headlines unavailable. Try refreshing sources.' : 'No live headlines yet.'}
+            </p>
+          )}
+        </div>
+
+        <aside className="pulse-panel" aria-labelledby="pulse-panel-heading">
+          <div className="pulse-panel__header">
+            <p className="eyebrow">Articles</p>
+            <h3 id="pulse-panel-heading">All articles we've pulled</h3>
+            <p className="pulse-panel__description">
+              {visibleHeadlines.length
+                ? 'Read the original reporting or explore related coverage for any article.'
+                : 'Waiting for live headlines to populate this panel.'}
+            </p>
+          </div>
+          <ol className="pulse-panel__list">
+            {visibleHeadlines.length ? (
+              visibleHeadlines.map((headline, index) => (
+                <li key={headline.url} className="pulse-panel__item">
+                  <div className="pulse-panel__article">
+                    <span className="pulse-panel__rank">{index + 1}</span>
+                    <div className="pulse-panel__content">
+                      <span className="pulse-panel__label">{clip(headline.title)}</span>
+                      <span className="pulse-panel__meta">
+                        {headline.source}
+                        {headline.publishedAt && ` · ${formatRelativeTime(headline.publishedAt)}`}
+                      </span>
+                      {headline.summary && <span className="pulse-panel__quote">"{clip(headline.summary, 120)}"</span>}
+                      <div className="pulse-panel__actions">
+                        <a href={headline.url} target="_blank" rel="noreferrer" className="button button--light">
+                          Read full article
+                        </a>
+                        <button type="button" className="ghost ghost--inverse" onClick={() => {
+                          onSelectHeadline(headline);
+                          onExploreTopic();
+                        }}>
+                          Explore related coverage
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </li>
+              ))
+            ) : (
+              <li className="pulse-panel__empty">No headlines ready yet. Refresh the sources to populate this panel.</li>
+            )}
+          </ol>
+        </aside>
+      </div>
+    </section>
+  );
+};
+
+export default TileView;

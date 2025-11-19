@@ -1,6 +1,6 @@
 import './App.css';
 import { useEffect } from 'react';
-import BubbleView from './components/BubbleView';
+import TileView from './components/TileView';
 import TopicView from './components/TopicView';
 import ArticleDetailView from './components/ArticleDetailView';
 import { useHashRoute } from './hooks/useHashRoute';
@@ -46,22 +46,28 @@ const AppShell = () => {
     navigate('article');
   };
 
+  const handleExploreTopic = () => {
+    if (!selectedHeadline) {
+      return;
+    }
+
+    const searchUrl = new URL('https://www.google.com/search');
+    searchUrl.searchParams.set('q', selectedHeadline.title);
+    if (typeof window !== 'undefined') {
+      window.open(searchUrl.toString(), '_blank', 'noopener,noreferrer');
+    }
+  };
+
 
 
   const handleBack = () => {
-    navigate('bubble');
+    navigate('tile');
   };
 
   return (
     <>
       <main className="app">
         <header className="app__header">
-          <p className="eyebrow">Morning Issue Radar</p>
-          <h1>See the issues every outlet repeats today</h1>
-          <p className="app__lead">
-            We cluster Guardian, NYT, NPR, and Reuters headlines into weighted phrases so you can scan the daily news landscape
-            in seconds.
-          </p>
           <div className="app__meta" role="status" aria-live="polite">
             <span>
               {lastUpdated ? `Updated ${formatUpdatedAt(lastUpdated)}` : loading ? 'Fetching latest radar…' : 'Using cached radar'}
@@ -71,11 +77,12 @@ const AppShell = () => {
           </div>
         </header>
 
-        {route === 'bubble' ? (
-          <BubbleView
+        {route === 'tile' ? (
+          <TileView
             {...headlinesState}
             selectedHeadline={selectedHeadline}
             onSelectHeadline={handleSelectHeadline}
+            onExploreTopic={handleExploreTopic}
           />
         ) : route === 'article' ? (
           <ArticleDetailView

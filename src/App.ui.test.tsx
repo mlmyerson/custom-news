@@ -1,8 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
-import * as headlinesService from './services/fetchHeadlines';
 
 const sampleHeadlines = [
   {
@@ -21,70 +20,93 @@ const sampleHeadlines = [
   },
 ];
 
+const buildHeadlinesState = () => ({
+  headlines: sampleHeadlines,
+  loading: false,
+  error: undefined,
+  refresh: vi.fn(),
+  lastUpdated: new Date().toISOString(),
+});
+
+const buildArticleSearchState = () => ({
+  articles: [],
+  loading: false,
+  error: undefined,
+  refresh: vi.fn(),
+});
+
+const mockUseHeadlines = vi.fn(buildHeadlinesState);
+const mockUseArticleSearch = vi.fn(buildArticleSearchState);
+
+vi.mock('./hooks/useHeadlines', () => ({
+  useHeadlines: () => mockUseHeadlines(),
+}));
+
+vi.mock('./hooks/useArticleSearch', () => ({
+  useArticleSearch: () => mockUseArticleSearch(),
+}));
+
 describe('App integration view', () => {
-  const user = userEvent.setup();
 
   beforeEach(() => {
-    vi.spyOn(headlinesService, 'fetchHeadlines').mockResolvedValue(sampleHeadlines);
-    window.location.hash = '#bubble';
+    mockUseHeadlines.mockImplementation(buildHeadlinesState);
+    mockUseArticleSearch.mockImplementation(buildArticleSearchState);
+    window.location.hash = '#tile';
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
-    window.location.hash = '#bubble';
+    vi.clearAllMocks();
+    window.location.hash = '#tile';
   });
 
-  it('renders the bubble map by default and navigates to article detail view on bubble click', async () => {
+  it('navigates to the article detail view when a tile is selected', async () => {
+    const user = userEvent.setup();
     render(<App />);
 
-    expect(screen.getByRole('heading', { name: /see the issues every outlet repeats today/i })).toBeInTheDocument();
+    await screen.findByRole('heading', { name: /morning issue mosaic/i });
+    expect(window.location.hash).toBe('#tile');
 
-    await user.click(await screen.findByRole('button', { name: /test headline alpha/i }));
+    const tiles = await screen.findByTestId('headline-tiles');
+    const tileButtons = within(tiles).getAllByRole('listitem');
+    await user.click(tileButtons[0]);
 
-    expect(screen.getByRole('heading', { name: sampleHeadlines[0].title })).toBeInTheDocument();
-    expect(screen.getByText(/article details/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /read full article/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: sampleHeadlines[0].title })).toBeInTheDocument();
     expect(window.location.hash).toBe('#article');
+
+    const readLink = screen.getByRole('link', { name: /read full article/i });
+    expect(readLink).toHaveAttribute('href', sampleHeadlines[0].url);
+
+    const exploreLink = screen.getByRole('link', { name: /explore related coverage/i });
+    const expectedUrl = `https://www.google.com/search?q=${encodeURIComponent(sampleHeadlines[0].title)}`;
+    expect(exploreLink).toHaveAttribute('href', expectedUrl);
   });
 
-  it('redirects to Google search when "Explore Related Coverage" is clicked from bubble preview', async () => {
+  it('keeps the explore link wired to Google search from article detail', async () => {
+    const user = userEvent.setup();
     render(<App />);
 
-    // Wait for headlines to load and click on the first bubble
-    await user.click(await screen.findByRole('button', { name: /test headline alpha/i }));
+    const tiles = await screen.findByTestId('headline-tiles');
+    const tileButtons = within(tiles).getAllByRole('listitem');
+    await user.click(tileButtons[0]);
 
-    // Verify we're on the article preview (in bubble view)
-    expect(await screen.findByText(/read full article/i)).toBeInTheDocument();
-    
-    // Find the "Explore Related Coverage" link
-    const exploreLink = screen.getByRole('link', { name: /explore related coverage/i });
-    expect(exploreLink).toBeInTheDocument();
-
-    // Verify the link points to a Google search with the article title
+    const exploreLink = await screen.findByRole('link', { name: /explore related coverage/i });
     const expectedUrl = `https://www.google.com/search?q=${encodeURIComponent(sampleHeadlines[0].title)}`;
     expect(exploreLink).toHaveAttribute('href', expectedUrl);
     expect(exploreLink).toHaveAttribute('target', '_blank');
     expect(exploreLink).toHaveAttribute('rel', 'noreferrer');
   });
 
-  it('redirects to Google search when "Explore Related Coverage" is clicked from article detail view', async () => {
+  it('returns to the tile view when the back button is used from article detail', async () => {
+    const user = userEvent.setup();
     render(<App />);
 
-    // Click on a bubble to go to article detail view
-    await user.click(await screen.findByRole('button', { name: /test headline alpha/i }));
+    const tiles = await screen.findByTestId('headline-tiles');
+    const tileButtons = within(tiles).getAllByRole('listitem');
+    await user.click(tileButtons[0]);
 
-    // Verify we're in the article detail view
-    expect(await screen.findByText(/read full article/i)).toBeInTheDocument();
-    expect(window.location.hash).toBe('#article');
+    await user.click(await screen.findByRole('button', { name: /back to tile grid/i }));
 
-    // Find the "Explore Related Coverage" link in article detail view
-    const exploreLink = screen.getByRole('link', { name: /explore related coverage/i });
-    expect(exploreLink).toBeInTheDocument();
-
-    // Verify the link points to a Google search with the article title
-    const expectedUrl = `https://www.google.com/search?q=${encodeURIComponent(sampleHeadlines[0].title)}`;
-    expect(exploreLink).toHaveAttribute('href', expectedUrl);
-    expect(exploreLink).toHaveAttribute('target', '_blank');
-    expect(exploreLink).toHaveAttribute('rel', 'noreferrer');
+    expect(window.location.hash).toBe('#tile');
+    expect(await screen.findByTestId('headline-tiles')).toBeInTheDocument();
   });
 });

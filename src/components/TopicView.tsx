@@ -48,7 +48,7 @@ const TopicView = ({ topic, onBack, articles, loading, error, refresh }: TopicVi
     <section className="view topic-view" aria-labelledby="topic-view-heading">
       <div className="topic-view__toolbar">
         <button type="button" className="ghost" onClick={onBack}>
-          ← Back to bubble map
+          ← Back to tile grid
         </button>
         <div className="topic-view__actions">
           <p className="eyebrow">Articles</p>
@@ -60,7 +60,7 @@ const TopicView = ({ topic, onBack, articles, loading, error, refresh }: TopicVi
       <div className="topic-view__content">
         <h2 id="topic-view-heading">{topic ?? 'Pick a topic to explore'}</h2>
         {showPlaceholder ? (
-          <p className="muted">Use the Back button or select a bubble to populate this panel with live articles.</p>
+          <p className="muted">Use the Back button or pick a tile to populate this panel with live articles.</p>
         ) : (
           <>
             <p className="topic-view__summary" role="status" aria-live="polite">
