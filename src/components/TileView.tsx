@@ -11,6 +11,16 @@ const TILE_LIMIT = 30;
 const TILE_TONES = ['tile--tone-amber', 'tile--tone-violet', 'tile--tone-blue', 'tile--tone-teal', 'tile--tone-rose'];
 const TILE_MEDIA_VARIANTS = 3;
 const TILE_MEDIA_STEP_SECONDS = 5;
+const TILE_MEDIA_STAGGER_RANGE_SECONDS = TILE_MEDIA_VARIANTS * TILE_MEDIA_STEP_SECONDS; // full cycle length
+
+const hashString = (value: string) => {
+  let hash = 0;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash << 5) - hash + value.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+};
 
 const clip = (value: string, length = 90) => (value.length > length ? `${value.slice(0, length).trim()}…` : value);
 
@@ -165,6 +175,9 @@ const TileView = ({ onSelectHeadline, onExploreTopic, selectedHeadline, headline
                 .filter(Boolean)
                 .join(' ');
 
+              // Deterministic stagger keeps tile cycles desynced but stable per headline
+              const cycleOffsetSeconds = ((hashString(headline.url) % 1000) / 1000) * TILE_MEDIA_STAGGER_RANGE_SECONDS;
+
               return (
                 <button
                   key={headline.url}
@@ -189,7 +202,7 @@ const TileView = ({ onSelectHeadline, onExploreTopic, selectedHeadline, headline
                           className="tile__background"
                           style={{
                             backgroundImage: `url(${imageUrl})`,
-                            animationDelay: `${mediaIndex * -TILE_MEDIA_STEP_SECONDS}s`,
+                            animationDelay: `${cycleOffsetSeconds - mediaIndex * TILE_MEDIA_STEP_SECONDS}s`,
                           }}
                         />
                       ))}
