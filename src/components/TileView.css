@@ -92,6 +92,23 @@
   pointer-events: none;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .tile__background {
+    animation: none;
+    opacity: 1;
+    transform: scale(1);
+    filter: brightness(0.85) saturate(0.85);
+  }
+  
+  .tile {
+    transition: none;
+  }
+  
+  .tile--no-media {
+    animation: none;
+  }
+}
+
 .tile::after {
   content: '';
   position: absolute;
@@ -265,7 +282,7 @@
   }
 }
 
-/* Pulse panel styles reused from earlier prototype */
+/* Pulse panel styles for article list */
 .pulse-panel {
   background: #0f172a;
   color: #f8fafc;

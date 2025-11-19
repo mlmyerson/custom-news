@@ -1,3 +1,5 @@
+// Minimum tile size for readability of text content (more conservative than the 90px minimum for tap-friendliness in tilingRules.json)
+// This ensures adequate space for headlines while the config's minTileSizePx ensures minimum tap target size
 export const MIN_READABLE_TILE_PX = 140;
 
 export const calculateReadableColumns = (

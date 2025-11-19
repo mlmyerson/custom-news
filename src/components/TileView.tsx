@@ -4,7 +4,7 @@ import type { UseHeadlinesResult } from '../hooks/useHeadlines';
 import type { Headline } from '../services/fetchHeadlines';
 import { HEADLINE_SOURCE_NAMES } from '../services/fetchHeadlines';
 import { generateMosaic, loadTilingRules, calculateTileDimensions } from '../services/tilingEngine';
-import { calculateBaseTileSize, calculateReadableColumns, MIN_READABLE_TILE_PX } from '../services/tileSizing';
+import { calculateBaseTileSize, calculateReadableColumns } from '../services/tileSizing';
 import type { PlacedTile } from '../types/tile';
 
 const TILE_LIMIT = 30;
@@ -115,9 +115,19 @@ const TileView = ({ onSelectHeadline, onExploreTopic, selectedHeadline, headline
       }
     };
     
+    // Debounce resize events to reduce performance impact
+    let timeoutId: NodeJS.Timeout;
+    const debouncedMeasureWidth = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(measureWidth, 150);
+    };
+    
     measureWidth();
-    window.addEventListener('resize', measureWidth);
-    return () => window.removeEventListener('resize', measureWidth);
+    window.addEventListener('resize', debouncedMeasureWidth);
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener('resize', debouncedMeasureWidth);
+    };
   }, []);
 
   return (
@@ -180,10 +190,11 @@ const TileView = ({ onSelectHeadline, onExploreTopic, selectedHeadline, headline
 
               return (
                 <button
-                  key={headline.url}
+                  key={`${tile.id}-${headline.url}`}
                   type="button"
                   className={classNames}
                   role="listitem"
+                  aria-label={`Select article: ${headline.title}`}
                   style={{
                     '--tile-width': `${dimensions.width}px`,
                     '--tile-height': `${dimensions.height}px`,

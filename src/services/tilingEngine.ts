@@ -102,12 +102,13 @@ const selectTileShape = (
   const totalWeight = shapes.reduce((sum, shape) => sum + shape.weight, 0);
   
   // Generate random value
-  let random = Math.random() * totalWeight;
+  const random = Math.random() * totalWeight;
   
   // Select shape based on weight
+  let accumulated = 0;
   for (const shape of shapes) {
-    random -= shape.weight;
-    if (random <= 0) {
+    accumulated += shape.weight;
+    if (random <= accumulated) {
       // Check if shape can fit
       if (canFitTile(shape, position, grid, grid.occupiedCells)) {
         // Additional check for 2x2 adjacency rule
@@ -118,6 +119,8 @@ const selectTileShape = (
         }
         return shape;
       }
+      // Shape was selected but doesn't fit, exit selection
+      break;
     }
   }
   
@@ -152,6 +155,9 @@ const tryPlaceWithDegradation = (
   return null;
 };
 
+// Maximum rows to search when looking for empty cells (prevents infinite loops in edge cases)
+const MAX_SEARCH_ROWS = 100;
+
 /**
  * Find the next empty cell in the grid
  */
@@ -178,7 +184,7 @@ const findNextEmptyCell = (
     }
     
     // If we've searched too many rows without finding space, stop
-    if (row > startRow + 100) {
+    if (row > startRow + MAX_SEARCH_ROWS) {
       return null;
     }
   }
@@ -192,9 +198,16 @@ export const generateMosaic = (
   columns: number = 4,
   rulesOverride?: Partial<TilingRules>
 ): MosaicGrid => {
+  const baseRules = loadTilingRules();
   const rules = rulesOverride 
-    ? { ...loadTilingRules(), ...rulesOverride }
-    : loadTilingRules();
+    ? {
+        ...baseRules,
+        ...rulesOverride,
+        gridConfig: { ...baseRules.gridConfig, ...rulesOverride.gridConfig },
+        placementRules: { ...baseRules.placementRules, ...rulesOverride.placementRules },
+        importanceModifiers: { ...baseRules.importanceModifiers, ...rulesOverride.importanceModifiers },
+      }
+    : baseRules;
   
   const grid: MosaicGrid = {
     columns,

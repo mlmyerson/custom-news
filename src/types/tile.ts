@@ -36,6 +36,9 @@ export type TilingRules = {
   gridConfig: GridConfig;
   tileShapes: TileShape[];
   placementRules: PlacementRules;
+  // Note: importanceModifiers is configured but not yet used in the tiling engine.
+  // Future implementation will adjust tile shape probabilities based on article importance.
+  // See design.md section 8 "Importance-Based Influence" for planned behavior.
   importanceModifiers: {
     breakingNews: ImportanceModifier;
     featured: ImportanceModifier;
