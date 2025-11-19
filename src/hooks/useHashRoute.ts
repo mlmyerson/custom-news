@@ -15,11 +15,6 @@ const parseRouteFromHash = (hash: string): RouteName => {
     return 'article';
   }
 
-  // Support legacy 'bubble' route for backwards compatibility
-  if (hashValue === 'bubble') {
-    return 'tile';
-  }
-
   if (hashValue === 'tile') {
     return 'tile';
   }

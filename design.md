@@ -5,7 +5,7 @@ A mobile-first, image-rich, generative news collage.
 1. High-Level Concept
 
 The Mosaic layout is a mobile-first generative collage of article tiles.
-Instead of a scrolling list or bubble grid, the app constructs an aesthetic, semi-random, rule-driven tile layout somewhat inspired by:
+Instead of a scrolling list or static grid, the app constructs an aesthetic, semi-random, rule-driven tile layout somewhat inspired by:
 
 magazine spreads
 
@@ -252,7 +252,7 @@ Swipe up to open article
 
 10. Refresh Flow
 
-The mosaic is not continuous (unlike the bubble river).
+The mosaic is not continuous (unlike the earlier river layout).
 Instead:
 
 User taps “Refresh Mosaic.”

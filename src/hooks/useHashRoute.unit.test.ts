@@ -38,9 +38,4 @@ describe('useHashRoute', () => {
     expect(window.location.hash).toBe('#topic');
   });
 
-  it('redirects legacy bubble route to tile route', () => {
-    window.location.hash = '#bubble';
-    const { result } = renderHook(() => useHashRoute());
-    expect(result.current.route).toBe('tile');
-  });
 });

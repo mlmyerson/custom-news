@@ -41,12 +41,12 @@ const ArticleDetailView = ({ article, onBack }: ArticleDetailViewProps) => {
       <section className="view article-detail-view" aria-labelledby="article-detail-heading">
         <div className="article-detail-view__toolbar">
           <button type="button" className="ghost" onClick={onBack}>
-            ← Back to bubble map
+            ← Back to tile grid
           </button>
         </div>
         <div className="article-detail-view__content">
           <h2 id="article-detail-heading">No article selected</h2>
-          <p className="muted">Use the Back button or select a bubble to view article details.</p>
+          <p className="muted">Use the Back button or pick a tile to view article details.</p>
         </div>
       </section>
     );
@@ -58,7 +58,7 @@ const ArticleDetailView = ({ article, onBack }: ArticleDetailViewProps) => {
     <section className="view article-detail-view" aria-labelledby="article-detail-heading">
       <div className="article-detail-view__toolbar">
         <button type="button" className="ghost" onClick={onBack}>
-          ← Back to bubble map
+          ← Back to tile grid
         </button>
       </div>
       <div className="article-detail-view__content">

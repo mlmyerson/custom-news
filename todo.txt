@@ -1,6 +1,0 @@
-
-
-reference design.md
-use a library to pull keywords from the article
-use the keywords to search for images from google
-pull several images and apply them to the tiles in the way the design doc prescribes

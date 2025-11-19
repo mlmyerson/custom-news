@@ -76,7 +76,7 @@ describe('App integration view', () => {
     const tileButtons = within(tiles).getAllByRole('listitem');
     await user.click(tileButtons[0]);
 
-    await user.click(await screen.findByRole('button', { name: /back to bubble map/i }));
+    await user.click(await screen.findByRole('button', { name: /back to tile grid/i }));
 
     expect(window.location.hash).toBe('#tile');
     expect(await screen.findByTestId('headline-tiles')).toBeInTheDocument();

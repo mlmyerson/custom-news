@@ -26,7 +26,7 @@ describe('TopicView', () => {
 
     expect(screen.getByRole('heading', { name: 'AI Regulation' })).toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: /back to bubble map/i }));
+    await user.click(screen.getByRole('button', { name: /back to tile grid/i }));
     expect(onBack).toHaveBeenCalled();
   });
 

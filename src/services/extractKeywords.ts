@@ -1,24 +1,5 @@
 import type { Headline } from './fetchHeadlines';
 
-export type KeywordBubble = {
-  phrase: string;
-  label: string;
-  mentions: number;
-  normalizedWeight: number;
-  scale: number;
-  colors: {
-    start: string;
-    end: string;
-  };
-  sampleHeadline?: Headline;
-};
-
-type PhraseStats = {
-  mentions: number;
-  tokenCount: number;
-  sampleHeadline?: Headline;
-};
-
 const STOP_WORDS = new Set([
   'a',
   'about',
@@ -108,9 +89,6 @@ const ALLOWED_SHORT_TOKENS = new Set(['ai', 'nato', 'who', 'g7', 'g20']);
 const STANDALONE_SHORT_BLOCKLIST = new Set(['us', 'uk', 'eu']);
 const JUNK_TERMS = new Set(['breaking news', 'live updates', 'top stories', 'morning briefing']);
 const MAX_PHRASE_TOKENS = 3;
-const MAX_OUTPUT = 40;
-const MIN_SCALE = 0.7;
-const MAX_SCALE = 1.6;
 
 const sanitize = (value: string) =>
   value
@@ -180,38 +158,6 @@ const toDisplayToken = (token: string): string => {
 
 const toTitleCase = (phrase: string) => phrase.split(' ').map(toDisplayToken).join(' ');
 
-const hashPhrase = (phrase: string) => {
-  let hash = 0;
-  for (let i = 0; i < phrase.length; i += 1) {
-    hash = (hash << 5) - hash + phrase.charCodeAt(i);
-    hash |= 0;
-  }
-  return Math.abs(hash);
-};
-
-const buildPalette = (phrase: string) => {
-  const hue = hashPhrase(phrase) % 360;
-  return {
-    start: `hsl(${hue} 85% 92%)`,
-    end: `hsl(${hue} 70% 58%)`,
-  };
-};
-
-const registerPhrase = (map: Map<string, PhraseStats>, phrase: string, tokenCount: number, headline: Headline) => {
-  const existing = map.get(phrase);
-  if (existing) {
-    existing.mentions += 1;
-    map.set(phrase, existing);
-    return;
-  }
-
-  map.set(phrase, {
-    mentions: 1,
-    tokenCount,
-    sampleHeadline: headline,
-  });
-};
-
 const buildCandidatePhrases = (tokens: string[]) => {
   const phrases: string[] = [];
   for (let i = 0; i < tokens.length; i += 1) {
@@ -228,51 +174,6 @@ const buildCandidatePhrases = (tokens: string[]) => {
     }
   }
   return phrases;
-};
-
-const rankKeywords = (map: Map<string, PhraseStats>) => {
-  const entries = Array.from(map.entries()).map(([phrase, stats]) => ({
-    phrase,
-    tokenCount: stats.tokenCount,
-    mentions: stats.mentions,
-    sampleHeadline: stats.sampleHeadline,
-    score: stats.mentions + stats.tokenCount * 0.35,
-  }));
-
-  entries.sort((a, b) => {
-    if (b.score !== a.score) {
-      return b.score - a.score;
-    }
-    if (b.mentions !== a.mentions) {
-      return b.mentions - a.mentions;
-    }
-    return b.phrase.length - a.phrase.length;
-  });
-
-  return entries.slice(0, MAX_OUTPUT);
-};
-
-const decorateKeywords = (entries: ReturnType<typeof rankKeywords>): KeywordBubble[] => {
-  if (entries.length === 0) {
-    return [];
-  }
-
-  const maxMentions = entries[0].mentions;
-
-  return entries.map((entry) => {
-    const normalized = maxMentions === 0 ? 0 : entry.mentions / maxMentions;
-    const scale = MIN_SCALE + normalized * (MAX_SCALE - MIN_SCALE);
-
-    return {
-      phrase: entry.phrase,
-      label: toTitleCase(entry.phrase),
-      mentions: entry.mentions,
-      normalizedWeight: normalized,
-      scale: Number(scale.toFixed(2)),
-      colors: buildPalette(entry.phrase),
-      sampleHeadline: entry.sampleHeadline,
-    };
-  });
 };
 
 export const extractHeadlineKeyphrases = (headline: Headline, maxPhrases = 3): string[] => {
@@ -314,24 +215,3 @@ export const extractHeadlineKeyphrases = (headline: Headline, maxPhrases = 3): s
   return ranked.slice(0, maxPhrases).map(([phrase]) => toTitleCase(phrase));
 };
 
-export const extractKeywordBubbles = (headlines: Headline[]): KeywordBubble[] => {
-  if (!headlines.length) {
-    return [];
-  }
-
-  const map = new Map<string, PhraseStats>();
-
-  headlines.forEach((headline) => {
-    const content = `${headline.title}. ${headline.summary}`;
-    const tokens = tokenize(content);
-    if (!tokens.length) {
-      return;
-    }
-
-    const phrases = Array.from(new Set(buildCandidatePhrases(tokens)));
-    phrases.forEach((phrase) => registerPhrase(map, phrase, phrase.split(' ').length, headline));
-  });
-
-  const ranked = rankKeywords(map);
-  return decorateKeywords(ranked);
-};
