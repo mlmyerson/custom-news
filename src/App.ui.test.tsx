@@ -1,4 +1,4 @@
-import { act, render, screen, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
@@ -34,7 +34,7 @@ describe('App integration view', () => {
     window.location.hash = '#tile';
   });
 
-  it('renders the tile mosaic by default and keeps the user on #tile when a tile is selected', async () => {
+  it('navigates to the article detail view when a tile is selected', async () => {
     render(<App />);
 
     expect(screen.getByRole('heading', { name: /see the issues every outlet repeats today/i })).toBeInTheDocument();
@@ -44,43 +44,41 @@ describe('App integration view', () => {
     const tileButtons = within(tiles).getAllByRole('listitem');
     await user.click(tileButtons[0]);
 
-    expect(screen.getAllByText(/read full article/i).length).toBeGreaterThan(0);
-    expect(window.location.hash).toBe('#tile');
+    expect(await screen.findByRole('heading', { name: sampleHeadlines[0].title })).toBeInTheDocument();
+    expect(window.location.hash).toBe('#article');
+
+    const readLink = screen.getByRole('link', { name: /read full article/i });
+    expect(readLink).toHaveAttribute('href', sampleHeadlines[0].url);
+
+    const exploreLink = screen.getByRole('link', { name: /explore related coverage/i });
+    const expectedUrl = `https://www.google.com/search?q=${encodeURIComponent(sampleHeadlines[0].title)}`;
+    expect(exploreLink).toHaveAttribute('href', expectedUrl);
   });
 
-  it('opens a Google search when Explore Related Coverage is clicked from the tile preview', async () => {
-    const openSpy = vi.spyOn(window, 'open').mockReturnValue(null);
+  it('keeps the explore link wired to Google search from article detail', async () => {
     render(<App />);
 
     const tiles = await screen.findByTestId('headline-tiles');
     const tileButtons = within(tiles).getAllByRole('listitem');
     await user.click(tileButtons[0]);
-
-    const exploreButtons = screen.getAllByRole('button', { name: /explore related coverage/i });
-    await user.click(exploreButtons[0]);
-
-    const expectedUrl = new URL('https://www.google.com/search');
-    expectedUrl.searchParams.set('q', sampleHeadlines[0].title);
-    expect(openSpy).toHaveBeenCalledWith(expectedUrl.toString(), '_blank', 'noopener,noreferrer');
-    openSpy.mockRestore();
-  });
-
-  it('links to Google search when viewing the article detail route', async () => {
-    render(<App />);
-
-    const tiles = await screen.findByTestId('headline-tiles');
-    const tileButtons = within(tiles).getAllByRole('listitem');
-    await user.click(tileButtons[0]);
-
-    act(() => {
-      window.location.hash = '#article';
-      window.dispatchEvent(new HashChangeEvent('hashchange'));
-    });
 
     const exploreLink = await screen.findByRole('link', { name: /explore related coverage/i });
     const expectedUrl = `https://www.google.com/search?q=${encodeURIComponent(sampleHeadlines[0].title)}`;
     expect(exploreLink).toHaveAttribute('href', expectedUrl);
     expect(exploreLink).toHaveAttribute('target', '_blank');
     expect(exploreLink).toHaveAttribute('rel', 'noreferrer');
+  });
+
+  it('returns to the tile view when the back button is used from article detail', async () => {
+    render(<App />);
+
+    const tiles = await screen.findByTestId('headline-tiles');
+    const tileButtons = within(tiles).getAllByRole('listitem');
+    await user.click(tileButtons[0]);
+
+    await user.click(await screen.findByRole('button', { name: /back to bubble map/i }));
+
+    expect(window.location.hash).toBe('#tile');
+    expect(await screen.findByTestId('headline-tiles')).toBeInTheDocument();
   });
 });
