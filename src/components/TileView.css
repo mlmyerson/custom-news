@@ -63,6 +63,11 @@
   isolation: isolate;
 }
 
+.tile--no-media {
+  background-size: 180% 180%;
+  animation: tileToneShift 14s ease infinite;
+}
+
 .tile__media {
   position: absolute;
   inset: 0;
@@ -179,6 +184,18 @@
   }
 }
 
+@keyframes tileToneShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .tile__background {
     animation: none;
@@ -187,6 +204,11 @@
 
   .tile__background:not(:first-child) {
     display: none;
+  }
+
+  .tile--no-media {
+    animation: none;
+    background-position: 50% 50%;
   }
 }
 

@@ -156,11 +156,20 @@ const TileView = ({ onSelectHeadline, onExploreTopic, selectedHeadline, headline
                 .slice(0, TILE_MEDIA_VARIANTS);
               const hasMedia = backgroundImages.length > 0;
               
+              const classNames = [
+                'tile',
+                toneClassForIndex(tile.articleIndex),
+                hasMedia ? 'tile--has-media' : 'tile--no-media',
+                selectedHeadline?.url === headline.url ? 'tile--active' : '',
+              ]
+                .filter(Boolean)
+                .join(' ');
+
               return (
                 <button
                   key={headline.url}
                   type="button"
-                  className={`tile ${toneClassForIndex(tile.articleIndex)} ${hasMedia ? 'tile--has-media' : ''} ${selectedHeadline?.url === headline.url ? 'tile--active' : ''}`}
+                  className={classNames}
                   role="listitem"
                   style={{
                     '--tile-width': `${dimensions.width}px`,

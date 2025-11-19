@@ -59,8 +59,9 @@ describe('App integration view', () => {
     const exploreButtons = screen.getAllByRole('button', { name: /explore related coverage/i });
     await user.click(exploreButtons[0]);
 
-    const expectedUrl = `https://www.google.com/search?q=${encodeURIComponent(sampleHeadlines[0].title)}`;
-    expect(openSpy).toHaveBeenCalledWith(expectedUrl, '_blank', 'noopener,noreferrer');
+    const expectedUrl = new URL('https://www.google.com/search');
+    expectedUrl.searchParams.set('q', sampleHeadlines[0].title);
+    expect(openSpy).toHaveBeenCalledWith(expectedUrl.toString(), '_blank', 'noopener,noreferrer');
     openSpy.mockRestore();
   });
 

@@ -275,6 +275,45 @@ const decorateKeywords = (entries: ReturnType<typeof rankKeywords>): KeywordBubb
   });
 };
 
+export const extractHeadlineKeyphrases = (headline: Headline, maxPhrases = 3): string[] => {
+  if (!headline || maxPhrases <= 0) {
+    return [];
+  }
+
+  const content = `${headline.title ?? ''} ${headline.summary ?? ''}`.trim();
+  if (!content) {
+    return [];
+  }
+
+  const tokens = tokenize(content);
+  if (!tokens.length) {
+    return [];
+  }
+
+  const phrases = buildCandidatePhrases(tokens);
+  if (!phrases.length) {
+    return [];
+  }
+
+  const counts = new Map<string, number>();
+  phrases.forEach((phrase) => counts.set(phrase, (counts.get(phrase) ?? 0) + 1));
+
+  const ranked = Array.from(counts.entries()).sort((a, b) => {
+    if (b[1] !== a[1]) {
+      return b[1] - a[1];
+    }
+
+    const tokenDiff = b[0].split(' ').length - a[0].split(' ').length;
+    if (tokenDiff !== 0) {
+      return tokenDiff;
+    }
+
+    return b[0].length - a[0].length;
+  });
+
+  return ranked.slice(0, maxPhrases).map(([phrase]) => toTitleCase(phrase));
+};
+
 export const extractKeywordBubbles = (headlines: Headline[]): KeywordBubble[] => {
   if (!headlines.length) {
     return [];
