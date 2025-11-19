@@ -23,6 +23,11 @@ const buildPlaceholderBackgrounds = (headline: Headline, index: number) => {
 
 const applyPlaceholderBackgrounds = (headlines: Headline[]) =>
   headlines.map((headline, index) => {
+    // Skip processing if backgroundImages are already populated with multiple images
+    if (Array.isArray(headline.backgroundImages) && headline.backgroundImages.length >= MAX_IMAGES_PER_HEADLINE) {
+      return headline;
+    }
+
     const providedImages = Array.isArray(headline.backgroundImages)
       ? headline.backgroundImages.filter(Boolean)
       : [];

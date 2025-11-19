@@ -194,9 +194,6 @@ describe('tilingEngine', () => {
       const mosaic = generateMosaic(10, 2);
       
       // In a 2-column grid, we should see mostly 1x1 and 1x2 tiles
-      const shapes = mosaic.tiles.map(t => t.shape.id);
-      const has2x2or2x1 = shapes.some(id => id === '2x2' || id === '2x1');
-      
       // With a 2-column grid, 2x-wide tiles can fit but are less common
       // We mainly want to ensure the algorithm completes successfully
       expect(mosaic.tiles.length).toBe(10);
