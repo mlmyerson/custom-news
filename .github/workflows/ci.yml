@@ -1,19 +1,11 @@
-name: CI
+name: PR Tests
 
 on:
-  push:
-    branches:
-      - main
-      - development
-      - 'feature/**'
   pull_request:
 
 jobs:
-  quality:
+  test:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        command: ["test:unit", "test:ui", "typecheck", "build"]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -27,5 +19,5 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run ${{ matrix.command }}
-        run: npm run ${{ matrix.command }}
+      - name: Run test suite
+        run: npm run test

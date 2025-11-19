@@ -2,7 +2,6 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
-import * as headlinesService from './services/fetchHeadlines';
 
 const sampleHeadlines = [
   {
@@ -21,23 +20,50 @@ const sampleHeadlines = [
   },
 ];
 
+const buildHeadlinesState = () => ({
+  headlines: sampleHeadlines,
+  loading: false,
+  error: undefined,
+  refresh: vi.fn(),
+  lastUpdated: new Date().toISOString(),
+});
+
+const buildArticleSearchState = () => ({
+  articles: [],
+  loading: false,
+  error: undefined,
+  refresh: vi.fn(),
+});
+
+const mockUseHeadlines = vi.fn(buildHeadlinesState);
+const mockUseArticleSearch = vi.fn(buildArticleSearchState);
+
+vi.mock('./hooks/useHeadlines', () => ({
+  useHeadlines: () => mockUseHeadlines(),
+}));
+
+vi.mock('./hooks/useArticleSearch', () => ({
+  useArticleSearch: () => mockUseArticleSearch(),
+}));
+
 describe('App integration view', () => {
-  const user = userEvent.setup();
 
   beforeEach(() => {
-    vi.spyOn(headlinesService, 'fetchHeadlines').mockResolvedValue(sampleHeadlines);
+    mockUseHeadlines.mockImplementation(buildHeadlinesState);
+    mockUseArticleSearch.mockImplementation(buildArticleSearchState);
     window.location.hash = '#tile';
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
     window.location.hash = '#tile';
   });
 
   it('navigates to the article detail view when a tile is selected', async () => {
+    const user = userEvent.setup();
     render(<App />);
 
-    expect(screen.getByRole('heading', { name: /see the issues every outlet repeats today/i })).toBeInTheDocument();
+    await screen.findByRole('heading', { name: /morning issue mosaic/i });
     expect(window.location.hash).toBe('#tile');
 
     const tiles = await screen.findByTestId('headline-tiles');
@@ -56,6 +82,7 @@ describe('App integration view', () => {
   });
 
   it('keeps the explore link wired to Google search from article detail', async () => {
+    const user = userEvent.setup();
     render(<App />);
 
     const tiles = await screen.findByTestId('headline-tiles');
@@ -70,6 +97,7 @@ describe('App integration view', () => {
   });
 
   it('returns to the tile view when the back button is used from article detail', async () => {
+    const user = userEvent.setup();
     render(<App />);
 
     const tiles = await screen.findByTestId('headline-tiles');
